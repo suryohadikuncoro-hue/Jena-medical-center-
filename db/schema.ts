@@ -71,7 +71,7 @@ export const salesOrders = pgTable("sales_orders", {
   number: varchar("number", { length: 20 }).notNull(),
   customerId: bigint("customer_id", { mode: "number" }).notNull(),
   orderDate: varchar("order_date", { length: 10 }).notNull(),
-  status: salesOrderStatus.notNull().default("draft"),
+  status: salesOrderStatus("status").notNull().default("draft"),
   note: text("note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -82,7 +82,7 @@ export const salesOrderItems = pgTable("sales_order_items", {
   productId: bigint("product_id", { mode: "number" }).notNull(),
   qty: integer("qty").notNull(),
   unitPrice: integer("unit_price").notNull(),
-  priceSource: priceSourceEnum.notNull().default("standar"),
+  priceSource: priceSourceEnum("price_source").notNull().default("standar"),
 });
 
 // ---------- Purchase orders ----------
@@ -93,7 +93,7 @@ export const purchaseOrders = pgTable("purchase_orders", {
   supplierId: bigint("supplier_id", { mode: "number" }).notNull(),
   salesOrderId: bigint("sales_order_id", { mode: "number" }).notNull(),
   orderDate: varchar("order_date", { length: 10 }).notNull(),
-  status: purchaseOrderStatus.notNull().default("sent"),
+  status: purchaseOrderStatus("status").notNull().default("sent"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -115,7 +115,7 @@ export const supplierInvoices = pgTable("supplier_invoices", {
   invoiceDate: varchar("invoice_date", { length: 10 }).notNull(),
   dueDate: varchar("due_date", { length: 10 }),
   printedTotal: integer("printed_total").notNull(),
-  status: supplierInvoiceStatus.notNull().default("draft"),
+  status: supplierInvoiceStatus("status").notNull().default("draft"),
   taxInvoiceComplete: boolean("tax_invoice_complete").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -142,7 +142,7 @@ export const invoices = pgTable("invoices", {
   subtotal: integer("subtotal").notNull(),
   ppnAmount: integer("ppn_amount").notNull().default(0),
   total: integer("total").notNull(),
-  status: invoiceStatus.notNull().default("draft"),
+  status: invoiceStatus("status").notNull().default("draft"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -163,12 +163,12 @@ export const invoiceItems = pgTable("invoice_items", {
 
 export const payments = pgTable("payments", {
   id: serial("id").primaryKey(),
-  direction: paymentDirection.notNull(),
+  direction: paymentDirection("direction").notNull(),
   invoiceId: bigint("invoice_id", { mode: "number" }),
   supplierInvoiceId: bigint("supplier_invoice_id", { mode: "number" }),
   date: varchar("date", { length: 10 }).notNull(),
   amount: integer("amount").notNull(),
-  method: paymentMethod.notNull().default("transfer"),
+  method: paymentMethod("method").notNull().default("transfer"),
   note: varchar("note", { length: 200 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -179,15 +179,15 @@ export const accounts = pgTable("accounts", {
   id: serial("id").primaryKey(),
   code: varchar("code", { length: 10 }).notNull(),
   name: varchar("name", { length: 120 }).notNull(),
-  type: accountType.notNull(),
-  normalBalance: normalBalanceEnum.notNull(),
+  type: accountType("type").notNull(),
+  normalBalance: normalBalanceEnum("normal_balance").notNull(),
 });
 
 export const journalEntries = pgTable("journal_entries", {
   id: serial("id").primaryKey(),
   date: varchar("date", { length: 10 }).notNull(),
   memo: varchar("memo", { length: 255 }).notNull(),
-  sourceType: journalSourceType.notNull(),
+  sourceType: journalSourceType("source_type").notNull(),
   sourceId: bigint("source_id", { mode: "number" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -203,5 +203,5 @@ export const journalLines = pgTable("journal_lines", {
 export const periods = pgTable("periods", {
   id: serial("id").primaryKey(),
   month: varchar("month", { length: 7 }).notNull(),
-  status: periodStatus.notNull().default("open"),
+  status: periodStatus("status").notNull().default("open"),
 });
