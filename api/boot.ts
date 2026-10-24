@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import "dotenv/config";
 import { bodyLimit } from "hono/body-limit";
 import type { HttpBindings } from "@hono/node-server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
