@@ -9,10 +9,11 @@ import { getAccessToken } from "@/lib/auth";
 export const trpc = createTRPCReact<AppRouter>();
 
 const queryClient = new QueryClient();
+const apiUrl = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: `${apiUrl}/api/trpc`,
       transformer: superjson,
         fetch(input, init) {
           const token = getAccessToken();

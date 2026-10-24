@@ -16,3 +16,13 @@ export const env = {
   supabaseUrl: required("SUPABASE_URL"),
   supabasePublishableKey: required("SUPABASE_PUBLISHABLE_KEY"),
 };
+
+export function configureRuntimeEnv(values: {
+  databaseUrl?: string;
+  supabaseUrl?: string;
+  supabasePublishableKey?: string;
+}) {
+  if (values.databaseUrl) env.databaseUrl = values.databaseUrl;
+  if (values.supabaseUrl) env.supabaseUrl = values.supabaseUrl;
+  if (values.supabasePublishableKey) env.supabasePublishableKey = values.supabasePublishableKey;
+}

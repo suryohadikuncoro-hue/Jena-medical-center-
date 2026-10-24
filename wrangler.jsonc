@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jena-medical-api",
+  "main": "api/worker.ts",
+  "compatibility_date": "2026-10-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "vars": {
+    "SUPABASE_URL": "https://hnkslpbifxqubcpzhihg.supabase.co",
+    "FRONTEND_ORIGIN": "https://jena-medical-center.pages.dev"
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "77628fa285584248ac62a996afb4d7d5"
+    }
+  ]
+}
