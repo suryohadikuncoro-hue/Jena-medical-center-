@@ -1,0 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Proza+Libre:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm off-white scheme — from the retrieved palette */
+    --paper: #eeece7;
+    --paper-2: #d8d2cb;
+    --ink: #292929;
+    --ink-soft: #57534b;
+    --slate: #687886;
+    --slate-deep: #4d5b68;
+    --slate-hover: #98a3ac;
+    --line: #c9c4ba;
+    --line-strong: #292929;
+    --warn: #a2662a;
+    --bad: #9b3a2e;
+    --ok: #3e6b4f;
+
+    --background: 43 15% 92%;
+    --foreground: 0 0% 16%;
+    --card: 43 15% 92%;
+    --card-foreground: 0 0% 16%;
+    --popover: 43 15% 94%;
+    --popover-foreground: 0 0% 16%;
+    --primary: 207 13% 47%;
+    --primary-foreground: 43 15% 96%;
+    --secondary: 30 11% 82%;
+    --secondary-foreground: 0 0% 16%;
+    --muted: 30 11% 85%;
+    --muted-foreground: 30 6% 35%;
+    --accent: 30 11% 84%;
+    --accent-foreground: 0 0% 16%;
+    --destructive: 6 55% 39%;
+    --destructive-foreground: 43 15% 96%;
+    --border: 36 10% 79%;
+    --input: 36 10% 79%;
+    --ring: 207 13% 40%;
+    --radius: 0;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+    font-feature-settings: 'tnum' 1, 'cv05' 1;
+    line-height: 1.5;
+  }
+
+  .font-display {
+    font-family: 'Proza Libre', 'Inter', sans-serif;
+  }
+
+  *:focus-visible {
+    outline: 2px dashed var(--slate-deep);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* hairline section rule */
+  .rule {
+    border-top: 1px solid var(--line);
+  }
+  .rule-strong {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .label-caps {
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    cursor: pointer;
+    transition: background-color 180ms ease-out, color 180ms ease-out, border-color 180ms ease-out;
+  }
+  .btn:hover { background: #3d3d3d; }
+  .btn:active { background: #171717; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-accent {
+    background: var(--slate);
+    border-color: var(--slate);
+    color: #fff;
+  }
+  .btn-accent:hover { background: var(--slate-deep); }
+  .btn-accent:active { background: #3d4a55; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--line-strong);
+  }
+  .btn-ghost:hover { background: var(--paper-2); }
+  .btn-ghost:active { background: #cdc8be; }
+
+  .input, .select {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 0.75rem;
+    font-size: 0.9375rem;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    transition: border-color 150ms ease-out;
+  }
+  .input:focus, .select:focus { border-color: var(--ink); outline: none; }
+  .input::placeholder { color: #8a857a; }
+
+  /* staggered entrance */
+  .rise {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: rise-in 0.6s ease-out forwards;
+  }
+  .rise-1 { animation-delay: 0.05s; }
+  .rise-2 { animation-delay: 0.12s; }
+  .rise-3 { animation-delay: 0.19s; }
+  .rise-4 { animation-delay: 0.26s; }
+
+  @keyframes rise-in {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rise { animation: none; opacity: 1; transform: none; }
+    * { transition-duration: 0.01ms !important; }
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+  }
+}
