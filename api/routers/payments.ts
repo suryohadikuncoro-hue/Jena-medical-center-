@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "../middleware";
+import { createRouter, protectedProcedure } from "../middleware";
 import { getDb } from "../queries/connection";
 import { customers, invoices, payments, supplierInvoiceItems, supplierInvoices, suppliers } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 import { recordPayment } from "../queries/business";
 
 export const paymentsRouter = createRouter({
-  list: publicQuery.query(async () => {
+  list: protectedProcedure.query(async () => {
     const db = getDb();
     const rows = await db.select().from(payments).orderBy(desc(payments.id));
     const invs = await db.select({ id: invoices.id, number: invoices.number }).from(invoices);
@@ -21,7 +21,7 @@ export const paymentsRouter = createRouter({
   }),
 
   // Tagihan yang masih punya sisa (untuk dropdown pembayaran)
-  open: publicQuery.query(async () => {
+  open: protectedProcedure.query(async () => {
     const db = getDb();
     const invs = await db
       .select({
@@ -67,7 +67,7 @@ export const paymentsRouter = createRouter({
     return { invoices: openInvoices, supplierInvoices: openFaktur };
   }),
 
-  record: publicQuery
+  record: protectedProcedure
     .input(
       z.object({
         direction: z.enum(["in", "out"]),

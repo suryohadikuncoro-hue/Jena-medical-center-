@@ -1,55 +1,55 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "../middleware";
+import { createRouter, protectedProcedure } from "../middleware";
 import { getDb } from "../queries/connection";
 import { customers, customerPrices, products, suppliers } from "@db/schema";
 import { eq, desc, and } from "drizzle-orm";
 
 export const masterRouter = createRouter({
-  customers: publicQuery.query(async () => {
+  customers: protectedProcedure.query(async () => {
     return getDb().select().from(customers).orderBy(desc(customers.id));
   }),
-  createCustomer: publicQuery.input(z.object({ name: z.string().min(1), phone: z.string().optional(), address: z.string().optional(), termDays: z.number().int().min(0).max(365).default(30) })).mutation(async ({ input }) => {
+  createCustomer: protectedProcedure.input(z.object({ name: z.string().min(1), phone: z.string().optional(), address: z.string().optional(), termDays: z.number().int().min(0).max(365).default(30) })).mutation(async ({ input }) => {
     const db = getDb();
     const count = await db.select().from(customers);
     const code = `C${String(count.length + 1).padStart(3, "0")}`;
     const [row] = await db.insert(customers).values({ code, ...input }).$returningId();
     return row;
   }),
-  updateCustomer: publicQuery.input(z.object({ id: z.number(), name: z.string().min(1), phone: z.string().optional(), address: z.string().optional(), termDays: z.number().int().min(0).max(365) })).mutation(async ({ input }) => {
+  updateCustomer: protectedProcedure.input(z.object({ id: z.number(), name: z.string().min(1), phone: z.string().optional(), address: z.string().optional(), termDays: z.number().int().min(0).max(365) })).mutation(async ({ input }) => {
     const { id, ...data } = input;
     await getDb().update(customers).set(data).where(eq(customers.id, id));
     return { ok: true };
   }),
 
-  suppliers: publicQuery.query(async () => getDb().select().from(suppliers).orderBy(desc(suppliers.id))),
-  createSupplier: publicQuery.input(z.object({ name: z.string().min(1), phone: z.string().optional() })).mutation(async ({ input }) => {
+  suppliers: protectedProcedure.query(async () => getDb().select().from(suppliers).orderBy(desc(suppliers.id))),
+  createSupplier: protectedProcedure.input(z.object({ name: z.string().min(1), phone: z.string().optional() })).mutation(async ({ input }) => {
     const db = getDb();
     const count = await db.select().from(suppliers);
     const code = `S${String(count.length + 1).padStart(3, "0")}`;
     const [row] = await db.insert(suppliers).values({ code, ...input }).$returningId();
     return row;
   }),
-  updateSupplier: publicQuery.input(z.object({ id: z.number(), name: z.string().min(1), phone: z.string().optional() })).mutation(async ({ input }) => {
+  updateSupplier: protectedProcedure.input(z.object({ id: z.number(), name: z.string().min(1), phone: z.string().optional() })).mutation(async ({ input }) => {
     const { id, ...data } = input;
     await getDb().update(suppliers).set(data).where(eq(suppliers.id, id));
     return { ok: true };
   }),
 
-  products: publicQuery.query(async () => getDb().select().from(products).orderBy(desc(products.id))),
-  createProduct: publicQuery.input(z.object({ name: z.string().min(1), unit: z.string().min(1), basePrice: z.number().int().min(0), taxable: z.boolean().default(true) })).mutation(async ({ input }) => {
+  products: protectedProcedure.query(async () => getDb().select().from(products).orderBy(desc(products.id))),
+  createProduct: protectedProcedure.input(z.object({ name: z.string().min(1), unit: z.string().min(1), basePrice: z.number().int().min(0), taxable: z.boolean().default(true) })).mutation(async ({ input }) => {
     const db = getDb();
     const count = await db.select().from(products);
     const sku = `SKU-${String(count.length + 1).padStart(3, "0")}`;
     const [row] = await db.insert(products).values({ sku, ...input }).$returningId();
     return row;
   }),
-  updateProduct: publicQuery.input(z.object({ id: z.number(), name: z.string().min(1), unit: z.string().min(1), basePrice: z.number().int().min(0), taxable: z.boolean() })).mutation(async ({ input }) => {
+  updateProduct: protectedProcedure.input(z.object({ id: z.number(), name: z.string().min(1), unit: z.string().min(1), basePrice: z.number().int().min(0), taxable: z.boolean() })).mutation(async ({ input }) => {
     const { id, ...data } = input;
     await getDb().update(products).set(data).where(eq(products.id, id));
     return { ok: true };
   }),
 
-  customerPrices: publicQuery.input(z.object({ customerId: z.number() })).query(async ({ input }) => {
+  customerPrices: protectedProcedure.input(z.object({ customerId: z.number() })).query(async ({ input }) => {
     const db = getDb();
     const rows = await db.select({
       productId: products.id,
@@ -66,7 +66,7 @@ export const masterRouter = createRouter({
       return { ...r, price, isSpecial: r.price !== null, marginPct: price > 0 ? Math.round(((price - r.lastCost) / price) * 100) : 0 };
     });
   }),
-  setCustomerPrice: publicQuery.input(z.object({ customerId: z.number(), productId: z.number(), price: z.number().int().min(0) })).mutation(async ({ input }) => {
+  setCustomerPrice: protectedProcedure.input(z.object({ customerId: z.number(), productId: z.number(), price: z.number().int().min(0) })).mutation(async ({ input }) => {
     const db = getDb();
     const existing = await db.select({ id: customerPrices.id }).from(customerPrices).where(and(eq(customerPrices.customerId, input.customerId), eq(customerPrices.productId, input.productId))).limit(1);
     if (existing[0]) await db.update(customerPrices).set({ price: input.price }).where(eq(customerPrices.id, existing[0].id));

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import superjson from "superjson";
 import type { AppRouter } from "../../api/router";
 import type { ReactNode } from "react";
+import { getAccessToken } from "@/lib/auth";
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -13,10 +14,14 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
+        fetch(input, init) {
+          const token = getAccessToken();
+          const headers = new Headers(init?.headers);
+          if (token) headers.set("Authorization", `Bearer ${token}`);
+          return globalThis.fetch(input, {
+            ...(init ?? {}),
+            headers,
+            credentials: "include",
         });
       },
     }),

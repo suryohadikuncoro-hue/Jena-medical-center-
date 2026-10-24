@@ -13,4 +13,6 @@ export const env = {
   appSecret: required("APP_SECRET"),
   isProduction: process.env.NODE_ENV === "production",
   databaseUrl: required("DATABASE_URL"),
+  supabaseUrl: required("SUPABASE_URL"),
+  supabasePublishableKey: required("SUPABASE_PUBLISHABLE_KEY"),
 };

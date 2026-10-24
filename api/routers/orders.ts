@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createRouter, publicQuery } from "../middleware";
+import { createRouter, protectedProcedure } from "../middleware";
 import { getDb } from "../queries/connection";
 import {
   customers,
@@ -32,7 +32,7 @@ async function nextNumber(kind: "SO" | "PO") {
 }
 
 export const ordersRouter = createRouter({
-  list: publicQuery.query(async () => {
+  list: protectedProcedure.query(async () => {
     const db = getDb();
     const orders = await db
       .select({
@@ -63,7 +63,7 @@ export const ordersRouter = createRouter({
     });
   }),
 
-  detail: publicQuery.input(z.object({ id: z.number() })).query(async ({ input }) => {
+  detail: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
     const db = getDb();
     const [order] = await db
       .select({
@@ -149,7 +149,7 @@ export const ordersRouter = createRouter({
     };
   }),
 
-  create: publicQuery
+  create: protectedProcedure
     .input(
       z.object({
         customerId: z.number(),
@@ -181,7 +181,7 @@ export const ordersRouter = createRouter({
     }),
 
   // Buat order ke supplier untuk (sebagian) baris pesanan
-  orderToSupplier: publicQuery
+  orderToSupplier: protectedProcedure
     .input(
       z.object({
         salesOrderId: z.number(),
@@ -213,7 +213,7 @@ export const ordersRouter = createRouter({
     }),
 
   // Catat balasan supplier → pesanan terkonfirmasi
-  confirmPurchaseOrder: publicQuery
+  confirmPurchaseOrder: protectedProcedure
     .input(z.object({ poId: z.number() }))
     .mutation(async ({ input }) => {
       const db = getDb();
@@ -232,7 +232,7 @@ export const ordersRouter = createRouter({
     }),
 
   // Catat faktur supplier (draf, belum dibukukan)
-  recordSupplierInvoice: publicQuery
+  recordSupplierInvoice: protectedProcedure
     .input(
       z.object({
         poId: z.number(),
@@ -273,13 +273,13 @@ export const ordersRouter = createRouter({
       return { id: row.id };
     }),
 
-  postSupplierInvoice: publicQuery
+  postSupplierInvoice: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       return postSupplierInvoice(input.id);
     }),
 
-  supplierInvoices: publicQuery.query(async () => {
+  supplierInvoices: protectedProcedure.query(async () => {
     const db = getDb();
     const fakturs = await db
       .select({

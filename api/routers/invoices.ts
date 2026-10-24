@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createRouter, publicQuery } from "../middleware";
+import { createRouter, protectedProcedure } from "../middleware";
 import { getDb } from "../queries/connection";
 import {
   customers,
@@ -32,7 +32,7 @@ async function nextInvoiceNumber() {
 }
 
 export const invoicesRouter = createRouter({
-  list: publicQuery.query(async () => {
+  list: protectedProcedure.query(async () => {
     const db = getDb();
     const rows = await db
       .select({
@@ -57,7 +57,7 @@ export const invoicesRouter = createRouter({
     });
   }),
 
-  detail: publicQuery.input(z.object({ id: z.number() })).query(async ({ input }) => {
+  detail: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
     const db = getDb();
     const [inv] = await db
       .select({
@@ -92,7 +92,7 @@ export const invoicesRouter = createRouter({
   }),
 
   // Buat invoice (draf) dari pesanan — semua atau sebagian baris
-  createFromOrder: publicQuery
+  createFromOrder: protectedProcedure
     .input(
       z.object({
         salesOrderId: z.number(),
@@ -165,7 +165,7 @@ export const invoicesRouter = createRouter({
       return { id: row.id, number };
     }),
 
-  updateDraft: publicQuery
+  updateDraft: protectedProcedure
     .input(z.object({
       id: z.number(),
       items: z.array(z.object({ id: z.number(), discountPercent: z.number().int().min(0).max(100), ppnPercent: z.number().int().min(0).max(100) })).min(1),
@@ -188,11 +188,11 @@ export const invoicesRouter = createRouter({
     }),
 
   // Terbitkan → jurnal piutang/pendapatan/PPN + HPP otomatis
-  issue: publicQuery.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+  issue: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
     return issueInvoice(input.id);
   }),
 
-  deleteDraft: publicQuery.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+  deleteDraft: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
     const db = getDb();
     const [inv] = await db.select().from(invoices).where(eq(invoices.id, input.id)).limit(1);
     if (!inv || inv.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Hanya draf yang bisa dihapus" });
@@ -201,7 +201,7 @@ export const invoicesRouter = createRouter({
     return { ok: true };
   }),
 
-  paidAmount: publicQuery.input(z.object({ id: z.number() })).query(async ({ input }) => {
+  paidAmount: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
     return { paid: await paidAmountForInvoice(input.id) };
   }),
 });

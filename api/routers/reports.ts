@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, publicQuery } from "../middleware";
+import { createRouter, protectedProcedure } from "../middleware";
 import { getDb } from "../queries/connection";
 import {
   accounts,
@@ -60,7 +60,7 @@ const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padSt
 
 export const reportsRouter = createRouter({
   // ---------- Beranda ----------
-  dashboard: publicQuery.query(async () => {
+  dashboard: protectedProcedure.query(async () => {
     const db = getDb();
     const lines = await allLines();
 
@@ -234,7 +234,7 @@ export const reportsRouter = createRouter({
   }),
 
   // ---------- Ikhtisar / Laba Rugi / Neraca ----------
-  summary: publicQuery
+  summary: protectedProcedure
     .input(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }))
     .query(async ({ input }) => {
       const lines = await allLines();
@@ -299,7 +299,7 @@ export const reportsRouter = createRouter({
       };
     }),
 
-  labaRugi: publicQuery
+  labaRugi: protectedProcedure
     .input(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }))
     .query(async ({ input }) => {
       const lines = await allLines();
@@ -323,7 +323,7 @@ export const reportsRouter = createRouter({
       return { pendapatan, beban, totalPendapatan, totalBeban, labaBersih: totalPendapatan - totalBeban };
     }),
 
-  neraca: publicQuery
+  neraca: protectedProcedure
     .input(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }))
     .query(async ({ input }) => {
       const lines = await allLines();
@@ -351,7 +351,7 @@ export const reportsRouter = createRouter({
       return { aset, liabilitas, ekuitas, labaBerjalan, totalAset, totalLiabilitas, totalEkuitas };
     }),
 
-  jurnal: publicQuery
+  jurnal: protectedProcedure
     .input(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }))
     .query(async ({ input }) => {
       const db = getDb();
@@ -379,7 +379,7 @@ export const reportsRouter = createRouter({
       return result;
     }),
 
-  bukuBesar: publicQuery
+  bukuBesar: protectedProcedure
     .input(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/), code: z.string() }))
     .query(async ({ input }) => {
       const lines = await allLines();
@@ -395,11 +395,11 @@ export const reportsRouter = createRouter({
       return { opening, rows, closing: running };
     }),
 
-  accountList: publicQuery.query(async () => {
+  accountList: protectedProcedure.query(async () => {
     return getDb().select().from(accounts).orderBy(asc(accounts.code));
   }),
 
-  ppn: publicQuery
+  ppn: protectedProcedure
     .input(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }))
     .query(async ({ input }) => {
       const lines = await allLines();
@@ -417,7 +417,7 @@ export const reportsRouter = createRouter({
       };
     }),
 
-  periodStatus: publicQuery.query(async () => {
+  periodStatus: protectedProcedure.query(async () => {
     return getDb().select().from(periods).orderBy(desc(periods.month));
   }),
 });
