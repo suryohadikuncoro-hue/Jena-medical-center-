@@ -1,4 +1,5 @@
-import { drizzle } from "drizzle-orm/mysql2";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { env } from "../lib/env";
 import * as schema from "@db/schema";
 import * as relations from "@db/relations";
@@ -9,10 +10,12 @@ let instance: ReturnType<typeof drizzle<typeof fullSchema>>;
 
 export function getDb() {
   if (!instance) {
-    instance = drizzle(env.databaseUrl, {
-      mode: "planetscale",
-      schema: fullSchema,
+    const client = postgres(env.databaseUrl, {
+      prepare: false,
+      max: 1,
+      ssl: env.databaseUrl.includes("supabase.co") ? "require" : undefined,
     });
+    instance = drizzle(client, { schema: fullSchema });
   }
   return instance;
 }
