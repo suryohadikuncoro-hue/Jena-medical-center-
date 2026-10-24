@@ -173,7 +173,7 @@ export const ordersRouter = createRouter({
       const [row] = await db
         .insert(salesOrders)
         .values({ number, customerId: input.customerId, orderDate: input.orderDate, note: input.note, status: "draft" })
-        .$returningId();
+        .returning({ id: salesOrders.id });
       for (const it of input.items) {
         await db.insert(salesOrderItems).values({ orderId: row.id, ...it });
       }
@@ -201,7 +201,7 @@ export const ordersRouter = createRouter({
           orderDate: today(),
           status: "sent",
         })
-        .$returningId();
+        .returning({ id: purchaseOrders.id });
       for (const it of input.items) {
         await db.insert(purchaseOrderItems).values({ poId: row.id, ...it });
       }
@@ -266,7 +266,7 @@ export const ordersRouter = createRouter({
           taxInvoiceComplete: input.taxInvoiceComplete,
           status: "draft",
         })
-        .$returningId();
+        .returning({ id: supplierInvoices.id });
       for (const it of input.items) {
         await db.insert(supplierInvoiceItems).values({ invoiceId: row.id, ...it });
       }

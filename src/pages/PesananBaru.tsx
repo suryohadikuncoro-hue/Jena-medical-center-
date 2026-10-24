@@ -11,6 +11,12 @@ type Row = { productId: number; qty: number; unitPrice: number; priceSource: "st
 
 export default function PesananBaru() {
   const navigate = useNavigate();
+  const [customerId, setCustomerId] = useState<number | "">("");
+  const [orderDate, setOrderDate] = useState(todayLocal());
+  const [note, setNote] = useState("");
+  const [rows, setRows] = useState<Row[]>([{ productId: 0, qty: 1, unitPrice: 0, priceSource: "standar" }]);
+  const [error, setError] = useState<string | null>(null);
+
   const customers = trpc.master.customers.useQuery();
   const products = trpc.master.products.useQuery();
   const customerPrices = trpc.master.customerPrices.useQuery(
@@ -18,12 +24,6 @@ export default function PesananBaru() {
     { enabled: Boolean(customerId) },
   );
   const create = trpc.orders.create.useMutation();
-
-  const [customerId, setCustomerId] = useState<number | "">("");
-  const [orderDate, setOrderDate] = useState(todayLocal());
-  const [note, setNote] = useState("");
-  const [rows, setRows] = useState<Row[]>([{ productId: 0, qty: 1, unitPrice: 0, priceSource: "standar" }]);
-  const [error, setError] = useState<string | null>(null);
 
   const prodMap = useMemo(() => new Map((products.data ?? []).map((p) => [p.id, p])), [products.data]);
   const priceMap = useMemo(() => new Map((customerPrices.data ?? []).map((p) => [p.productId, p])), [customerPrices.data]);

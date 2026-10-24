@@ -158,7 +158,7 @@ export const invoicesRouter = createRouter({
           total: subtotal,
           status: "draft",
         })
-        .$returningId();
+        .returning({ id: invoices.id });
       for (const l of lines) {
         await db.insert(invoiceItems).values({ invoiceId: row.id, ...l });
       }

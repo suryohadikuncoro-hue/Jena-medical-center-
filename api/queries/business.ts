@@ -54,7 +54,7 @@ export async function postJournal(
   const [entry] = await db
     .insert(journalEntries)
     .values({ date, memo, sourceType, sourceId })
-    .$returningId();
+    .returning({ id: journalEntries.id });
   for (const l of clean) {
     await db.insert(journalLines).values({
       entryId: entry.id,
@@ -207,7 +207,7 @@ export async function recordPayment(input: {
   note?: string;
 }) {
   const db = getDb();
-  const [p] = await db.insert(payments).values(input).$returningId();
+  const [p] = await db.insert(payments).values(input).returning({ id: payments.id });
 
   if (input.direction === "in" && input.invoiceId) {
     const [inv] = await db.select().from(invoices).where(eq(invoices.id, input.invoiceId)).limit(1);

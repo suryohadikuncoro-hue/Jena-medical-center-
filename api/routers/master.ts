@@ -12,7 +12,7 @@ export const masterRouter = createRouter({
     const db = getDb();
     const count = await db.select().from(customers);
     const code = `C${String(count.length + 1).padStart(3, "0")}`;
-    const [row] = await db.insert(customers).values({ code, ...input }).$returningId();
+    const [row] = await db.insert(customers).values({ code, ...input }).returning({ id: customers.id });
     return row;
   }),
   updateCustomer: protectedProcedure.input(z.object({ id: z.number(), name: z.string().min(1), phone: z.string().optional(), address: z.string().optional(), termDays: z.number().int().min(0).max(365) })).mutation(async ({ input }) => {
@@ -26,7 +26,7 @@ export const masterRouter = createRouter({
     const db = getDb();
     const count = await db.select().from(suppliers);
     const code = `S${String(count.length + 1).padStart(3, "0")}`;
-    const [row] = await db.insert(suppliers).values({ code, ...input }).$returningId();
+    const [row] = await db.insert(suppliers).values({ code, ...input }).returning({ id: suppliers.id });
     return row;
   }),
   updateSupplier: protectedProcedure.input(z.object({ id: z.number(), name: z.string().min(1), phone: z.string().optional() })).mutation(async ({ input }) => {
@@ -40,7 +40,7 @@ export const masterRouter = createRouter({
     const db = getDb();
     const count = await db.select().from(products);
     const sku = `SKU-${String(count.length + 1).padStart(3, "0")}`;
-    const [row] = await db.insert(products).values({ sku, ...input }).$returningId();
+    const [row] = await db.insert(products).values({ sku, ...input }).returning({ id: products.id });
     return row;
   }),
   updateProduct: protectedProcedure.input(z.object({ id: z.number(), name: z.string().min(1), unit: z.string().min(1), basePrice: z.number().int().min(0), taxable: z.boolean() })).mutation(async ({ input }) => {

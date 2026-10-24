@@ -14,12 +14,13 @@
     "esModuleInterop": true,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "paths": {
       "@/*": ["./src/*"],
       "@contracts/*": ["./contracts/*"],
       "@db/*": ["./db/*"]
     }
   },
-  "include": ["api", "contracts", "db"]
+  "include": ["api", "contracts", "db"],
+  "exclude": ["db/seed.ts"]
 }
