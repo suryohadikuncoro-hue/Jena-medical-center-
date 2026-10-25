@@ -18,6 +18,12 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      },
+  },
+  {
+    files: ['src/components/ui/**/*.{ts,tsx}', 'src/providers/trpc.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
 ])

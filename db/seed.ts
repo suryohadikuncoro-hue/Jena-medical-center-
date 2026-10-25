@@ -4,7 +4,6 @@ import {
   customers,
   invoiceItems,
   invoices,
-  payments,
   periods,
   products,
   purchaseOrderItems,
@@ -103,7 +102,7 @@ async function seed() {
 
   // ---------- SO-0003 → INV-0003 (lunas) ----------
   const [so3] = await db.insert(salesOrders).values({ number: "SO-0003", customerId: custC.id, orderDate: "2026-10-05", status: "closed" }).$returningId();
-  const so3Items = await db.insert(salesOrderItems).values([
+  await db.insert(salesOrderItems).values([
     { orderId: so3.id, productId: pMasker.id, qty: 40, unitPrice: 41500, priceSource: "standar" },
     { orderId: so3.id, productId: pSarung.id, qty: 20, unitPrice: 85000, priceSource: "standar" },
     { orderId: so3.id, productId: pTensi.id, qty: 1, unitPrice: 840000, priceSource: "khusus" },

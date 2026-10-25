@@ -32,6 +32,8 @@ export default function PesananBaru() {
 
   useEffect(() => {
     if (!editId || initializedEdit === editId || !existing.data) return;
+    // Hydrate the editable form when the selected order payload is available.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCustomerId(existing.data.order.customerId);
     setOrderDate(existing.data.order.orderDate);
     setNote(existing.data.order.note ?? "");
@@ -167,7 +169,11 @@ function ProductPicker({ products, productId, onSelect }: { products: Array<{ id
   const selected = products.find((p) => p.id === productId);
   const [query, setQuery] = useState(selected?.name ?? "");
   const [open, setOpen] = useState(false);
-  useEffect(() => { setQuery(selected?.name ?? ""); }, [selected?.name]);
+  useEffect(() => {
+    // Keep the search field aligned with the selected product after a row pick.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setQuery(selected?.name ?? "");
+  }, [selected?.name]);
   const needle = query.trim().toLowerCase();
   const matches = products.filter((p) => !needle || `${p.name} ${p.sku}`.toLowerCase().includes(needle)).slice(0, 8);
   return (

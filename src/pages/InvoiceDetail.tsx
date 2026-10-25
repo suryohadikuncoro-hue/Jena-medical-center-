@@ -18,6 +18,8 @@ export default function InvoiceDetail() {
 
   useEffect(() => {
     const invoiceItems = q.data?.items ?? [];
+    // Form state must reset when a different invoice payload arrives.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAdjustments(Object.fromEntries(invoiceItems.map((it) => [it.id, { discountPercent: it.discountPercent, ppnPercent: it.ppnPercent }])));
   }, [q.data?.items]);
 
