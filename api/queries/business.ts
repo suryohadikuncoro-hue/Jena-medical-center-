@@ -23,6 +23,27 @@ export const COA = {
 
 type DbLike = Pick<ReturnType<typeof getDb>, "select" | "insert" | "update" | "execute">;
 
+export function assertPaymentReference(
+  direction: "in" | "out",
+  invoiceId?: number,
+  supplierInvoiceId?: number,
+) {
+  const hasInvoice = Boolean(invoiceId);
+  const hasSupplierInvoice = Boolean(supplierInvoiceId);
+  const valid = direction === "in"
+    ? hasInvoice && !hasSupplierInvoice
+    : hasSupplierInvoice && !hasInvoice;
+  if (!valid) throw new Error("Referensi pembayaran tidak sesuai arah pembayaran");
+}
+
+export function assertPaymentWithinOutstanding(amount: number, outstanding: number, message: string) {
+  if (amount <= 0 || amount > outstanding) throw new Error(message);
+}
+
+export function assertSufficientStock(stockQty: number, qty: number, productName: string) {
+  if (qty <= 0 || stockQty < qty) throw new Error(`Stok ${productName} tidak mencukupi`);
+}
+
 async function accountId(code: string, db: DbLike = getDb()): Promise<number> {
   const rows = await db.select().from(accounts).where(eq(accounts.code, code)).limit(1);
   if (!rows[0]) throw new Error(`Akun ${code} belum ada di bagan akun`);
@@ -127,7 +148,7 @@ export async function issueInvoice(id: number) {
       await tx.execute(sql`select id from products where id = ${it.productId} for update`);
       const [prod] = await tx.select().from(products).where(eq(products.id, it.productId)).limit(1);
       if (!prod) throw new Error("Barang tidak ditemukan");
-      if (it.qty <= 0 || prod.stockQty < it.qty) throw new Error(`Stok ${prod.name} tidak mencukupi`);
+      assertSufficientStock(prod.stockQty, it.qty, prod.name);
       const lineCogs = it.qty * prod.avgCost;
       cogs += lineCogs;
       await tx.update(invoiceItems).set({ cogsAmount: lineCogs }).where(eq(invoiceItems.id, it.id));
@@ -158,11 +179,7 @@ export async function recordPayment(input: {
   method: "transfer" | "cash" | "other";
   note?: string;
 }) {
-  const hasInvoice = Boolean(input.invoiceId);
-  const hasSupplierInvoice = Boolean(input.supplierInvoiceId);
-  if ((input.direction === "in" && (!hasInvoice || hasSupplierInvoice)) || (input.direction === "out" && (!hasSupplierInvoice || hasInvoice))) {
-    throw new Error("Referensi pembayaran tidak sesuai arah pembayaran");
-  }
+  assertPaymentReference(input.direction, input.invoiceId, input.supplierInvoiceId);
   const db = getDb();
   return db.transaction(async (tx) => {
     const [p] = await tx.insert(payments).values(input).returning({ id: payments.id });
@@ -173,7 +190,7 @@ export async function recordPayment(input: {
       if (inv.status === "draft") throw new Error("Invoice belum diterbitkan");
       await tx.execute(sql`select id from invoices where id = ${inv.id} for update`);
       const paidBefore = await paidAmountForInvoice(inv.id, tx);
-      if (input.amount > inv.total - paidBefore) throw new Error("Pembayaran melebihi sisa tagihan");
+      assertPaymentWithinOutstanding(input.amount, inv.total - paidBefore, "Pembayaran melebihi sisa tagihan");
       await postJournal(input.date, `Pembayaran invoice ${inv.number}`, "payment", p.id, [
         { code: COA.KAS, debit: input.amount },
         { code: COA.PIUTANG, credit: input.amount },
@@ -196,7 +213,7 @@ export async function recordPayment(input: {
       await tx.execute(sql`select id from supplier_invoices where id = ${fak.id} for update`);
       const paidBefore = await paidAmountForSupplierInvoice(fak.id, tx);
       const postedTotal = await postedSupplierInvoiceTotal(fak.id, tx);
-      if (input.amount > postedTotal - paidBefore) throw new Error("Pembayaran melebihi sisa faktur supplier");
+      assertPaymentWithinOutstanding(input.amount, postedTotal - paidBefore, "Pembayaran melebihi sisa faktur supplier");
       await postJournal(input.date, `Pembayaran faktur ${fak.number}`, "payment", p.id, [
         { code: COA.HUTANG, debit: input.amount },
         { code: COA.KAS, credit: input.amount },
