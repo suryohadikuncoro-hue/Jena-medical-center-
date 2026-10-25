@@ -19,7 +19,9 @@ export default function Pesanan() {
   if (q.isLoading) return <Loading />;
   if (q.error || !q.data) return <LoadError message={q.error?.message} retry={() => q.refetch()} />;
 
-  const rows = q.data.filter((o) => status === "all" || o.status === status);
+  const rows = q.data.filter((o) =>
+    status === "all" || (status === "ordered" ? o.pendingSupplierCount > 0 : o.status === status)
+  );
 
   return (
     <div>
@@ -64,6 +66,11 @@ export default function Pesanan() {
                   <div className="mt-1 truncate text-sm text-[var(--ink-soft)]">
                     {o.customerName} · {tanggal(o.orderDate)} · termin {o.termDays} hari
                   </div>
+                  {o.pendingSupplierCount > 0 && (
+                    <div className="mt-1 text-xs font-medium text-[var(--warn)]">
+                      {o.pendingSupplierCount} PO menunggu balasan supplier
+                    </div>
+                  )}
                 </div>
                 <div className="shrink-0 text-right">
                   <div className="font-display text-base font-semibold">{rp(o.total)}</div>

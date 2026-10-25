@@ -17,6 +17,7 @@ import {
 } from "@db/schema";
 import { eq, desc, asc, inArray } from "drizzle-orm";
 import { postSupplierInvoice, orderTotal } from "../queries/business";
+import { pendingSupplierCountsBySalesOrder } from "../queries/order-status";
 
 const today = () => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; };
 
@@ -50,11 +51,17 @@ export const ordersRouter = createRouter({
     const invs = await db
       .select({ id: invoices.id, salesOrderId: invoices.salesOrderId, subtotal: invoices.subtotal, status: invoices.status })
       .from(invoices);
+    const sentPos = await db
+      .select({ salesOrderId: purchaseOrders.salesOrderId, status: purchaseOrders.status })
+      .from(purchaseOrders)
+      .where(eq(purchaseOrders.status, "sent"));
+    const pendingSupplierCounts = pendingSupplierCountsBySalesOrder(sentPos);
     return orders.map((o) => {
       const its = items.filter((i) => i.orderId === o.id);
       const inv = invs.filter((v) => v.salesOrderId === o.id);
       return {
         ...o,
+        pendingSupplierCount: pendingSupplierCounts.get(o.id) ?? 0,
         total: orderTotal(its),
         itemCount: its.length,
         invoiced: inv.filter((v) => v.status !== "draft").reduce((s, v) => s + v.subtotal, 0),
@@ -224,6 +231,13 @@ export const ordersRouter = createRouter({
     )
     .mutation(async ({ input }) => {
       const db = getDb();
+      const [so] = await db
+        .select({ status: salesOrders.status })
+        .from(salesOrders)
+        .where(eq(salesOrders.id, input.salesOrderId))
+        .limit(1);
+      if (!so) throw new TRPCError({ code: "NOT_FOUND", message: "Pesanan tidak ditemukan" });
+      if (so.status === "closed") throw new TRPCError({ code: "BAD_REQUEST", message: "Pesanan yang sudah selesai tidak dapat diorder ke supplier." });
       const number = await nextNumber("PO");
       const [row] = await db
         .insert(purchaseOrders)
@@ -238,12 +252,7 @@ export const ordersRouter = createRouter({
       for (const it of input.items) {
         await db.insert(purchaseOrderItems).values({ poId: row.id, ...it });
       }
-      const [so] = await db
-        .select({ status: salesOrders.status })
-        .from(salesOrders)
-        .where(eq(salesOrders.id, input.salesOrderId))
-        .limit(1);
-      if (so?.status === "draft") {
+      if (so.status !== "ordered") {
         await db.update(salesOrders).set({ status: "ordered" }).where(eq(salesOrders.id, input.salesOrderId));
       }
       return { id: row.id, number };

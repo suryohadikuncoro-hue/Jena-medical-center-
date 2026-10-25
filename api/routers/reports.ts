@@ -17,6 +17,7 @@ import {
   suppliers,
 } from "@db/schema";
 import { eq, desc, asc, and, gte, lte } from "drizzle-orm";
+import { countSalesOrdersWithPendingSupplier, pendingSupplierCountsBySalesOrder } from "../queries/order-status";
 
 // ---------- ledger helpers ----------
 
@@ -104,7 +105,8 @@ export const reportsRouter = createRouter({
       .innerJoin(suppliers, eq(supplierInvoices.supplierId, suppliers.id));
     const fakItems = await db.select().from(supplierInvoiceItems);
     const pays = await db.select().from(payments);
-    const pos = await db.select().from(purchaseOrders);
+    const pos = await db.select({ salesOrderId: purchaseOrders.salesOrderId, status: purchaseOrders.status }).from(purchaseOrders);
+    const pendingSupplierCounts = pendingSupplierCountsBySalesOrder(pos);
 
     const orderTotal = (id: number) => soItems.filter((i) => i.orderId === id).reduce((s, i) => s + i.qty * i.unitPrice, 0);
     const fakComputed = (id: number) => fakItems.filter((i) => i.invoiceId === id).reduce((s, i) => {
@@ -116,7 +118,7 @@ export const reportsRouter = createRouter({
 
     // --- dokumen yang perlu diproses ---
     const baru = orders.filter((o) => o.status === "draft");
-    const menunggu = pos.filter((p) => p.status === "sent");
+    const menungguCount = countSalesOrdersWithPendingSupplier(orders.map((o) => o.id), pendingSupplierCounts);
     const selisih = faks.filter((f) => f.printedTotal !== fakComputed(f.id));
 
     // --- perlu tindakan ---
@@ -192,7 +194,7 @@ export const reportsRouter = createRouter({
 
     return {
       baruCount: baru.length,
-      menungguCount: menunggu.length,
+      menungguCount,
       selisihCount: selisih.length,
       ditagih,
       belumDitagih: openOrderValue,
