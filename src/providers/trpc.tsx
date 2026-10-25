@@ -1,19 +1,23 @@
 import { createTRPCReact } from "@trpc/react-query";
-import { httpBatchLink } from "@trpc/client";
+import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import superjson from "superjson";
 import type { AppRouter } from "../../api/router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { getAccessToken, refreshSession } from "@/lib/auth";
+import { queryRetryDelay, shouldRetryQuery } from "@/lib/query-retry";
 
 export const trpc = createTRPCReact<AppRouter>();
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      retryDelay: 500,
+      retry: (failureCount, error) => {
+        const code = error instanceof TRPCClientError ? error.data?.code : undefined;
+        return shouldRetryQuery(failureCount, code);
+      },
+      retryDelay: queryRetryDelay,
       refetchOnWindowFocus: false,
       staleTime: 15_000,
     },
