@@ -1,17 +1,17 @@
-CREATE TABLE IF NOT EXISTS `customer_prices` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `customer_id` bigint unsigned NOT NULL,
-  `product_id` bigint unsigned NOT NULL,
-  `price` int NOT NULL DEFAULT 0,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `customer_prices_customer_product_uq` (`customer_id`, `product_id`)
+-- PostgreSQL migration for customer-specific prices and invoice tax/discount fields.
+-- Keep this idempotent because the initial schema may already define these columns.
+CREATE TABLE IF NOT EXISTS public.customer_prices (
+  id SERIAL PRIMARY KEY,
+  customer_id BIGINT NOT NULL,
+  product_id BIGINT NOT NULL,
+  price INTEGER NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
-ALTER TABLE `supplier_invoice_items`
-  ADD COLUMN `discount_percent` int NOT NULL DEFAULT 0,
-  ADD COLUMN `ppn_percent` int NOT NULL DEFAULT 0;
+ALTER TABLE public.supplier_invoice_items
+  ADD COLUMN IF NOT EXISTS discount_percent INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS ppn_percent INTEGER NOT NULL DEFAULT 0;
 
-ALTER TABLE `invoice_items`
-  ADD COLUMN `discount_percent` int NOT NULL DEFAULT 0,
-  ADD COLUMN `ppn_percent` int NOT NULL DEFAULT 0;
+ALTER TABLE public.invoice_items
+  ADD COLUMN IF NOT EXISTS discount_percent INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS ppn_percent INTEGER NOT NULL DEFAULT 0;
