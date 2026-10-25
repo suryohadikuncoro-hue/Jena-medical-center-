@@ -60,13 +60,16 @@ export default function InvoiceDetail() {
           {inv.status === "draft" && (
             <div className="border-b border-[var(--line)] px-4 py-4 md:px-8">
               <div className="mb-2 text-xs text-[var(--ink-soft)]">PPN dan diskon diisi manual per item. Nilai 0 berarti tidak ada.</div>
+              <div className="grid grid-cols-[1fr_92px_92px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
+                <span>Barang</span><span>Diskon %</span><span>PPN %</span>
+              </div>
               <div className="space-y-2">
                 {items.map((it) => {
                   const v = adjustments[it.id] ?? { discountPercent: 0, ppnPercent: 0 };
                   return <div key={it.id} className="grid grid-cols-[1fr_92px_92px] items-center gap-2 text-sm">
                     <span className="truncate">{it.description}</span>
-                    <input className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.discountPercent} title="Diskon %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
-                    <input className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.ppnPercent} title="PPN %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, ppnPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
+                    <input aria-label="Diskon persen" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.discountPercent} title="Diskon %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
+                    <input aria-label="PPN persen" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.ppnPercent} title="PPN %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, ppnPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
                   </div>;
                 })}
               </div>

@@ -294,6 +294,9 @@ export default function PesananDetail() {
             </div>
           </div>
           <div className="label-caps mt-4">Barang sesuai faktur</div>
+          <div className="mt-2 grid grid-cols-[1fr_58px_94px_62px_62px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
+            <span>Barang</span><span>Qty</span><span>Harga modal</span><span>Diskon %</span><span>PPN %</span>
+          </div>
           <div className="mt-1 divide-y divide-[var(--line)] border-y border-[var(--line)]">
             {d.pos.find((p) => p.id === fakModal)?.items.map((it) => {
               const v = fakItems[it.productId] ?? { qty: it.qty, unitCost: it.unitCost, discountPercent: 0, ppnPercent: 0 };
@@ -301,14 +304,14 @@ export default function PesananDetail() {
               return (
                 <div key={it.productId} className="grid grid-cols-[1fr_58px_94px_62px_62px] items-center gap-2 py-2">
                   <span className="text-sm">{name}</span>
-                  <input className="input !min-h-[40px] px-2 text-sm" type="number" min={0} value={v.qty}
+                  <input aria-label="Jumlah barang" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} value={v.qty}
                     onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, qty: Math.max(0, Number(e.target.value) || 0) } })} />
-                  <input className="input !min-h-[40px] px-2 text-sm" type="number" min={0} value={v.unitCost}
+                  <input aria-label="Harga modal per unit" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} value={v.unitCost}
                     onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, unitCost: Math.max(0, Number(e.target.value) || 0) } })} />
-                  <input className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.discountPercent}
+                  <input aria-label="Diskon persen" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.discountPercent}
                     title="Diskon %" placeholder="Diskon %"
                     onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
-                  <input className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.ppnPercent}
+                  <input aria-label="PPN persen" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.ppnPercent}
                     title="PPN %" placeholder="PPN %"
                     onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, ppnPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
                 </div>
