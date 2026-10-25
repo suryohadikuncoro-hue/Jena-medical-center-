@@ -182,16 +182,17 @@ export async function recordPayment(input: {
   assertPaymentReference(input.direction, input.invoiceId, input.supplierInvoiceId);
   const db = getDb();
   return db.transaction(async (tx) => {
-    const [p] = await tx.insert(payments).values(input).returning({ id: payments.id });
-
+    let paymentId: number | null = null;
     if (input.direction === "in" && input.invoiceId) {
+      await tx.execute(sql`select id from invoices where id = ${input.invoiceId} for update`);
       const [inv] = await tx.select().from(invoices).where(eq(invoices.id, input.invoiceId)).limit(1);
       if (!inv) throw new Error("Invoice tidak ditemukan");
       if (inv.status === "draft") throw new Error("Invoice belum diterbitkan");
-      await tx.execute(sql`select id from invoices where id = ${inv.id} for update`);
       const paidBefore = await paidAmountForInvoice(inv.id, tx);
       assertPaymentWithinOutstanding(input.amount, inv.total - paidBefore, "Pembayaran melebihi sisa tagihan");
-      await postJournal(input.date, `Pembayaran invoice ${inv.number}`, "payment", p.id, [
+      const [payment] = await tx.insert(payments).values(input).returning({ id: payments.id });
+      paymentId = payment.id;
+      await postJournal(input.date, `Pembayaran invoice ${inv.number}`, "payment", payment.id, [
         { code: COA.KAS, debit: input.amount },
         { code: COA.PIUTANG, credit: input.amount },
       ], tx);
@@ -207,14 +208,16 @@ export async function recordPayment(input: {
     }
 
     if (input.direction === "out" && input.supplierInvoiceId) {
+      await tx.execute(sql`select id from supplier_invoices where id = ${input.supplierInvoiceId} for update`);
       const [fak] = await tx.select().from(supplierInvoices).where(eq(supplierInvoices.id, input.supplierInvoiceId)).limit(1);
       if (!fak) throw new Error("Faktur tidak ditemukan");
       if (fak.status === "draft") throw new Error("Faktur supplier belum dibukukan");
-      await tx.execute(sql`select id from supplier_invoices where id = ${fak.id} for update`);
       const paidBefore = await paidAmountForSupplierInvoice(fak.id, tx);
       const postedTotal = await postedSupplierInvoiceTotal(fak.id, tx);
       assertPaymentWithinOutstanding(input.amount, postedTotal - paidBefore, "Pembayaran melebihi sisa faktur supplier");
-      await postJournal(input.date, `Pembayaran faktur ${fak.number}`, "payment", p.id, [
+      const [payment] = await tx.insert(payments).values(input).returning({ id: payments.id });
+      paymentId = payment.id;
+      await postJournal(input.date, `Pembayaran faktur ${fak.number}`, "payment", payment.id, [
         { code: COA.HUTANG, debit: input.amount },
         { code: COA.KAS, credit: input.amount },
       ], tx);
@@ -222,7 +225,7 @@ export async function recordPayment(input: {
       const status = paid >= postedTotal ? "paid" : "partial";
       await tx.update(supplierInvoices).set({ status }).where(eq(supplierInvoices.id, fak.id));
     }
-    return p.id;
+    return paymentId;
   });
 }
 
