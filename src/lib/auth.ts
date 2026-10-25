@@ -39,6 +39,24 @@ export function getAccessToken() {
   return getSession()?.access_token ?? null;
 }
 
+export async function refreshSession() {
+  const session = getSession();
+  if (!session?.refresh_token) return null;
+  const { url, key } = config();
+  const response = await fetch(`${url}/auth/v1/token?grant_type=refresh_token`, {
+    method: "POST",
+    headers: { apikey: key, "content-type": "application/json" },
+    body: JSON.stringify({ refresh_token: session.refresh_token }),
+  });
+  if (!response.ok) {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+  const next = (await response.json()) as AuthSession;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  return next;
+}
+
 export async function signIn(email: string, password: string) {
   const { url, key } = config();
   const response = await fetch(`${url}/auth/v1/token?grant_type=password`, {
