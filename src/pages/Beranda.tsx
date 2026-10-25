@@ -324,7 +324,7 @@ export default function Beranda() {
               </div>
               <div className="flex items-start gap-2 rounded-xl border border-[#edf0f4] p-3">
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#e8f6f2] text-[#2f7568]"><FileText size={16} aria-hidden="true" /></span>
-                <div className="min-w-0"><p className="text-xs text-[#667085]">Draf faktur</p><p className="mt-0.5 text-sm font-semibold text-[#30394a]">{d.dokumenBelumDibukukan.drafFaktur} · {rpShort(d.dokumenBelumDibukukan.nilaiDrafFaktur)}</p></div>
+                <div className="min-w-0"><p className="text-xs text-[#667085]">Draf faktur supplier</p><p className="mt-0.5 text-sm font-semibold text-[#30394a]">{d.dokumenBelumDibukukan.drafFaktur} · {rpShort(d.dokumenBelumDibukukan.nilaiDrafFaktur)}</p></div>
               </div>
             </div>
             <div className="border-t border-[#edf0f4] px-4 py-4 sm:px-5">
