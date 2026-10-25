@@ -90,16 +90,9 @@ export default function PesananBaru() {
             const belowCost = p ? r.unitPrice < p.lastCost : false;
             const margin = p && r.unitPrice > 0 ? Math.round(((r.unitPrice - p.lastCost) / r.unitPrice) * 100) : 0;
             return (
-              <div className="border-t border-[var(--line)] px-4 py-4 md:px-8">
+              <div key={`${r.productId}-${i}`} className="border-t border-[var(--line)] px-4 py-4 md:px-8">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_110px_160px_auto]">
-                  <select className="select" value={r.productId} onChange={(e) => pickProduct(i, Number(e.target.value))}>
-                    <option value={0}>Pilih barang…</option>
-                    {(products.data ?? []).map((pr) => (
-                      <option key={pr.id} value={pr.id}>
-                        {pr.name} · stok {pr.stockQty} {pr.unit}
-                      </option>
-                    ))}
-                  </select>
+                  <ProductPicker products={products.data ?? []} productId={r.productId} onSelect={(productId) => pickProduct(i, productId)} />
                   <input
                     className="input" type="number" min={1} value={r.qty}
                     onChange={(e) => setRow(i, { qty: Math.max(1, Number(e.target.value) || 1) })}
@@ -166,6 +159,28 @@ export default function PesananBaru() {
         </button>
         <Link to="/pesanan" className="btn btn-ghost">Batal</Link>
       </div>
+    </div>
+  );
+}
+
+function ProductPicker({ products, productId, onSelect }: { products: Array<{ id: number; name: string; sku: string; stockQty: number; unit: string }>; productId: number; onSelect: (id: number) => void }) {
+  const selected = products.find((p) => p.id === productId);
+  const [query, setQuery] = useState(selected?.name ?? "");
+  const [open, setOpen] = useState(false);
+  useEffect(() => { setQuery(selected?.name ?? ""); }, [selected?.name]);
+  const needle = query.trim().toLowerCase();
+  const matches = products.filter((p) => !needle || `${p.name} ${p.sku}`.toLowerCase().includes(needle)).slice(0, 8);
+  return (
+    <div className="relative">
+      <input className="input w-full" value={query} placeholder="Cari nama barang / SKU…" onFocus={() => setOpen(true)} onChange={(e) => { const value = e.target.value; setQuery(value); setOpen(true); const exact = products.find((p) => p.name.toLowerCase() === value.trim().toLowerCase() || p.sku.toLowerCase() === value.trim().toLowerCase()); onSelect(exact?.id ?? 0); }} />
+      {open && (
+        <>
+          <button className="fixed inset-0 z-10 h-full w-full cursor-default" aria-label="Tutup pencarian" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto border border-[var(--line-strong)] bg-[var(--paper)] shadow-lg">
+            {matches.length ? matches.map((p) => <button key={p.id} type="button" className="block w-full border-b border-[var(--line)] px-3 py-3 text-left text-sm hover:bg-[var(--paper-2)]" onClick={() => { setQuery(p.name); onSelect(p.id); setOpen(false); }}><span className="font-semibold">{p.name}</span><span className="ml-2 text-xs text-[var(--ink-soft)]">{p.sku} · stok {p.stockQty} {p.unit}</span></button>) : <div className="px-3 py-3 text-sm text-[var(--ink-soft)]">Barang tidak ditemukan.</div>}
+          </div>
+        </>
+      )}
     </div>
   );
 }
