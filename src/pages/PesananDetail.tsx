@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { X, AlertTriangle, Check, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { rp, tanggal, todayLocal, waNumber } from "@/lib/format";
+import { sharePurchaseOrderPdf } from "@/lib/pdf";
 import { PageHeader, Section, StatusBadge, Loading, LoadError } from "@/components/bits";
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -63,6 +64,7 @@ export default function PesananDetail() {
   const [fakDue, setFakDue] = useState("");
   const [fakTax, setFakTax] = useState(false);
   const [fakItems, setFakItems] = useState<Record<number, { qty: number; unitCost: number; discountPercent: number; ppnPercent: number }>>({});
+  const [pdfBusy, setPdfBusy] = useState<number | null>(null);
 
   const d = q.data;
 
@@ -165,6 +167,7 @@ export default function PesananDetail() {
                           <MessageCircle size={14} /> Kirim ke WhatsApp
                         </a>
                       )}
+                      <button className="btn btn-ghost !min-h-[36px] px-3 text-xs" disabled={pdfBusy === p.id} onClick={async () => { setPdfBusy(p.id); try { await sharePurchaseOrderPdf({ number: p.number, orderDate: p.orderDate, supplierName: p.supplierName }, p.items.map((it) => ({ name: d.items.find((x) => x.productId === it.productId)?.productName ?? "Barang", qty: it.qty, unitCost: it.unitCost }))); } finally { setPdfBusy(null); } }}>{pdfBusy === p.id ? "Menyiapkan PDF…" : "PDF / WhatsApp"}</button>
                       <button className="btn btn-ghost !min-h-[36px] px-3 text-xs" onClick={() => confirmPO.mutate({ poId: p.id })} disabled={confirmPO.isPending}>
                         Catat balasan
                       </button>

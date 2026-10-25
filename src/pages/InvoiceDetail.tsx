@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router";
-import { MessageCircle, Trash2, Save } from "lucide-react";
+import { MessageCircle, Save, Trash2 } from "lucide-react";
+import { shareInvoicePdf } from "@/lib/pdf";
 import { useEffect, useState } from "react";
 import { trpc } from "@/providers/trpc";
 import { rp, tanggal, waNumber } from "@/lib/format";
@@ -13,6 +14,7 @@ export default function InvoiceDetail() {
   const updateDraft = trpc.invoices.updateDraft.useMutation({ onSuccess: () => { q.refetch(); } });
   const del = trpc.invoices.deleteDraft.useMutation({ onSuccess: () => { window.location.assign("/invoice"); } });
   const [adjustments, setAdjustments] = useState<Record<number, { discountPercent: number; ppnPercent: number }>>({});
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   useEffect(() => {
     const invoiceItems = q.data?.items ?? [];
@@ -112,11 +114,10 @@ export default function InvoiceDetail() {
             </button>
           </>
         ) : (
-          wa && (
-            <a className="btn btn-accent flex-1 md:flex-none" href={`https://wa.me/${wa}?text=${waText}`} target="_blank" rel="noreferrer">
-              <MessageCircle size={16} /> Kirim invoice via WhatsApp
-            </a>
-          )
+          <>
+            <button className="btn btn-ghost" disabled={pdfBusy} onClick={async () => { setPdfBusy(true); try { await shareInvoicePdf(inv, items); } finally { setPdfBusy(false); } }}>{pdfBusy ? "Menyiapkan PDF…" : "PDF / WhatsApp"}</button>
+            {wa && <a className="btn btn-accent flex-1 md:flex-none" href={`https://wa.me/${wa}?text=${waText}`} target="_blank" rel="noreferrer"><MessageCircle size={16} /> Kirim teks WhatsApp</a>}
+          </>
         )}
       </div>
 
