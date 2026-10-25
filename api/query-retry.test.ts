@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { queryRetryDelay, shouldRetryQuery } from "./query-retry";
+import { queryRetryDelay, shouldRetryQuery } from "../src/lib/query-retry";
 
 describe("query retry policy", () => {
   it("retries transient server and network failures up to three times", () => {
