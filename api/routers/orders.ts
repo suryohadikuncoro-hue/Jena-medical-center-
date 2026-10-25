@@ -205,7 +205,11 @@ export const ordersRouter = createRouter({
       for (const it of input.items) {
         await db.insert(purchaseOrderItems).values({ poId: row.id, ...it });
       }
-      const [so] = await db.select().from(salesOrders).where(eq(salesOrders.id, input.salesOrderId)).limit(1);
+      const [so] = await db
+        .select({ status: salesOrders.status })
+        .from(salesOrders)
+        .where(eq(salesOrders.id, input.salesOrderId))
+        .limit(1);
       if (so?.status === "draft") {
         await db.update(salesOrders).set({ status: "ordered" }).where(eq(salesOrders.id, input.salesOrderId));
       }
@@ -218,10 +222,14 @@ export const ordersRouter = createRouter({
     .mutation(async ({ input }) => {
       const db = getDb();
       await db.update(purchaseOrders).set({ status: "confirmed" }).where(eq(purchaseOrders.id, input.poId));
-      const [po] = await db.select().from(purchaseOrders).where(eq(purchaseOrders.id, input.poId)).limit(1);
+      const [po] = await db
+        .select({ salesOrderId: purchaseOrders.salesOrderId })
+        .from(purchaseOrders)
+        .where(eq(purchaseOrders.id, input.poId))
+        .limit(1);
       if (po) {
         const siblings = await db
-          .select()
+          .select({ status: purchaseOrders.status })
           .from(purchaseOrders)
           .where(eq(purchaseOrders.salesOrderId, po.salesOrderId));
         if (siblings.every((s) => s.status === "confirmed")) {
