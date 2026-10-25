@@ -15,7 +15,7 @@ import {
   supplierInvoices,
   suppliers,
 } from "@db/schema";
-import { eq, desc, asc } from "drizzle-orm";
+import { eq, desc, asc, inArray } from "drizzle-orm";
 import { postSupplierInvoice, orderTotal } from "../queries/business";
 
 const today = () => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; };
@@ -130,6 +130,9 @@ export const ordersRouter = createRouter({
           pos.some((p) => p.id === f.poId),
         )
       : [];
+    const allFakturItems = allFaktur.length
+      ? await db.select().from(supplierInvoiceItems).where(inArray(supplierInvoiceItems.invoiceId, allFaktur.map((f) => f.id)))
+      : [];
 
     return {
       order,
@@ -143,7 +146,15 @@ export const ordersRouter = createRouter({
       pos: pos.map((p) => ({
         ...p,
         items: poItems.filter((pi) => pi.poId === p.id),
-        faktur: allFaktur.filter((f) => f.poId === p.id),
+        faktur: allFaktur.filter((f) => f.poId === p.id).map((f) => {
+          const items = allFakturItems.filter((item) => item.invoiceId === f.id);
+          const computedTotal = items.reduce((sum, item) => {
+            const gross = item.qty * item.unitCost;
+            const net = gross - Math.round(gross * item.discountPercent / 100);
+            return sum + net + Math.round(net * item.ppnPercent / 100);
+          }, 0);
+          return { ...f, computedTotal, selisih: f.printedTotal - computedTotal };
+        }),
       })),
       invoices: invs,
     };

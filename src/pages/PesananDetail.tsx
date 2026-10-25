@@ -1,35 +1,27 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { X, AlertTriangle, Check, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { rp, tanggal, todayLocal, waNumber } from "@/lib/format";
 import { sharePurchaseOrderPdf } from "@/lib/pdf";
 import { PageHeader, Section, StatusBadge, Loading, LoadError } from "@/components/bits";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center" onClick={onClose}>
-      <div
-        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto border border-[var(--line-strong)] bg-[var(--paper)]"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        <div className="sticky top-0 flex items-center justify-between border-b border-[var(--line-strong)] bg-[var(--paper)] px-4 py-3">
-          <h3 className="font-display text-lg font-semibold">{title}</h3>
-          <button onClick={onClose} aria-label="Tutup" className="flex h-[44px] w-[44px] items-center justify-center transition-colors hover:bg-[var(--paper-2)]">
-            <X size={18} />
-          </button>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent showCloseButton={false} className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-none border-[var(--line-strong)] bg-[var(--paper)] p-0">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--line-strong)] bg-[var(--paper)] px-4 py-3">
+          <DialogTitle className="font-display text-lg font-semibold">{title}</DialogTitle>
+          <DialogClose asChild>
+            <button type="button" aria-label="Tutup dialog" className="flex size-11 items-center justify-center transition-colors hover:bg-[var(--paper-2)]">
+              <X size={18} />
+            </button>
+          </DialogClose>
         </div>
         <div className="p-4">{children}</div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -107,7 +99,7 @@ export default function PesananDetail() {
       <PageHeader
         title={order.number}
         sub={`${order.customerName} · ${tanggal(order.orderDate)}`}
-        action={<div className="flex flex-wrap items-center gap-2"><StatusBadge status={order.status} />{order.status === "draft" && <><Link className="btn btn-ghost !min-h-[36px] px-3 text-xs" to={`/pesanan/baru?edit=${order.id}`}><Pencil size={14} /> Edit</Link><button className="btn btn-ghost !min-h-[36px] px-3 text-xs text-[var(--bad)]" disabled={deleteOrder.isPending} onClick={() => { if (confirm("Hapus pesanan draft ini?")) deleteOrder.mutate({ id: order.id }); }}><Trash2 size={14} /> Hapus</button></>}</div>}
+        action={<div className="flex flex-wrap items-center gap-2"><StatusBadge status={order.status} />{order.status === "draft" && <><Link className="btn btn-ghost !min-h-[44px] px-3 text-xs" to={`/pesanan/baru?edit=${order.id}`}><Pencil size={14} /> Edit</Link><button className="btn btn-ghost !min-h-[44px] px-3 text-xs text-[var(--bad)]" disabled={deleteOrder.isPending} onClick={() => { if (confirm("Hapus pesanan draft ini?")) deleteOrder.mutate({ id: order.id }); }}><Trash2 size={14} /> Hapus</button></>}</div>}
       />
 
       {/* Barang */}
@@ -159,7 +151,7 @@ export default function PesananDetail() {
                     <div className="flex flex-wrap gap-2">
                       {waNumber(p.supplierPhone) && (
                         <a
-                          className="btn btn-accent !min-h-[36px] px-3 text-xs"
+                          className="btn btn-accent !min-h-[44px] px-3 text-xs"
                           target="_blank"
                           rel="noreferrer"
                           href={`https://wa.me/${waNumber(p.supplierPhone)}?text=${encodeURIComponent(`Halo ${p.supplierName}, berikut order ${p.number} dari Jena Medical Center:\n\n${p.items.map((it) => `${d.items.find((x) => x.productId === it.productId)?.productName ?? "Barang"} — ${it.qty} ${d.items.find((x) => x.productId === it.productId)?.unit ?? "unit"} @ ${rp(it.unitCost)}`).join("\n")}\n\nMohon konfirmasi ketersediaan dan harga. Terima kasih.`)}`}
@@ -167,11 +159,11 @@ export default function PesananDetail() {
                           <MessageCircle size={14} /> Kirim ke WhatsApp
                         </a>
                       )}
-                      <button className="btn btn-ghost !min-h-[36px] px-3 text-xs" disabled={pdfBusy === p.id} onClick={async () => { setPdfBusy(p.id); try { await sharePurchaseOrderPdf({ number: p.number, orderDate: p.orderDate, supplierName: p.supplierName }, p.items.map((it) => ({ name: d.items.find((x) => x.productId === it.productId)?.productName ?? "Barang", qty: it.qty, unitCost: it.unitCost }))); } finally { setPdfBusy(null); } }}>{pdfBusy === p.id ? "Menyiapkan PDF…" : "PDF / WhatsApp"}</button>
-                      <button className="btn btn-ghost !min-h-[36px] px-3 text-xs" onClick={() => confirmPO.mutate({ poId: p.id })} disabled={confirmPO.isPending}>
+                      <button className="btn btn-ghost !min-h-[44px] px-3 text-xs" disabled={pdfBusy === p.id} onClick={async () => { setPdfBusy(p.id); try { await sharePurchaseOrderPdf({ number: p.number, orderDate: p.orderDate, supplierName: p.supplierName }, p.items.map((it) => ({ name: d.items.find((x) => x.productId === it.productId)?.productName ?? "Barang", qty: it.qty, unitCost: it.unitCost }))); } finally { setPdfBusy(null); } }}>{pdfBusy === p.id ? "Menyiapkan PDF…" : "PDF / WhatsApp"}</button>
+                      <button className="btn btn-ghost !min-h-[44px] px-3 text-xs" onClick={() => confirmPO.mutate({ poId: p.id })} disabled={confirmPO.isPending}>
                         Catat balasan
                       </button>
-                      <button className="btn btn-ghost !min-h-[36px] px-3 text-xs text-[var(--bad)]" disabled={deletePO.isPending} onClick={() => { if (confirm("Hapus PO yang belum dikonfirmasi ini?")) deletePO.mutate({ poId: p.id }); }}>
+                      <button className="btn btn-ghost !min-h-[44px] px-3 text-xs text-[var(--bad)]" disabled={deletePO.isPending} onClick={() => { if (confirm("Hapus PO yang belum dikonfirmasi ini?")) deletePO.mutate({ poId: p.id }); }}>
                         <Trash2 size={14} /> Hapus PO
                       </button>
                     </div>
@@ -179,7 +171,7 @@ export default function PesananDetail() {
                 </div>
               ))}
               {order.status !== "closed" && (
-                <button className="btn btn-accent !min-h-[40px] px-3 text-xs" onClick={openPoModal}>
+                <button className="btn btn-accent !min-h-[44px] px-3 text-xs" onClick={openPoModal}>
                   Order ke supplier
                 </button>
               )}
@@ -205,7 +197,7 @@ export default function PesananDetail() {
               ))}
               {sisaTagih > 0 && (
                 <button
-                  className="btn !min-h-[40px] px-3 text-xs"
+                  className="btn !min-h-[44px] px-3 text-xs"
                   disabled={createInvoice.isPending}
                   onClick={() =>
                     createInvoice.mutate({
@@ -232,10 +224,10 @@ export default function PesananDetail() {
               {d.pos.map((p) => (
                 <div key={p.id}>
                   {p.faktur.map((f) => (
-                    <FakturRow key={f.id} fakturId={f.id} />
+                    <FakturRow key={f.id} faktur={f} />
                   ))}
                   {p.status === "confirmed" && p.faktur.length === 0 && (
-                    <button className="btn btn-ghost !min-h-[40px] px-3 text-xs" onClick={() => openFakModal(p.id)}>
+                    <button className="btn btn-ghost !min-h-[44px] px-3 text-xs" onClick={() => openFakModal(p.id)}>
                       Catat faktur dari {p.supplierName}
                     </button>
                   )}
@@ -249,23 +241,26 @@ export default function PesananDetail() {
       {/* Modal order ke supplier */}
       {poModal && d && (
         <Modal title="Order ke supplier" onClose={() => setPoModal(false)}>
-          <label className="label-caps">Supplier</label>
-          <select className="select mt-1" value={poSupplier} onChange={(e) => setPoSupplier(Number(e.target.value) || "")}>
+          <label className="label-caps block" htmlFor="po-supplier">Supplier</label>
+          <select id="po-supplier" className="select mt-1" disabled={suppliers.isLoading || Boolean(suppliers.error)} value={poSupplier} onChange={(e) => setPoSupplier(Number(e.target.value) || "")}>
             <option value="">Pilih supplier…</option>
             {(suppliers.data ?? []).map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
+          {suppliers.isLoading && <p className="mt-2 text-sm text-[var(--ink-soft)]" role="status">Memuat daftar supplier…</p>}
+          {suppliers.error && <div className="mt-2 flex flex-wrap items-center gap-3" role="alert"><p className="text-sm text-[var(--bad)]">Daftar supplier gagal dimuat: {suppliers.error.message}</p><button className="btn btn-ghost" type="button" onClick={() => void suppliers.refetch()}>Coba lagi</button></div>}
+          {suppliers.data?.length === 0 && <p className="mt-2 text-sm text-[var(--ink-soft)]">Belum ada supplier tersedia untuk dipilih.</p>}
           <div className="label-caps mt-4">Barang yang dipesan</div>
           <div className="mt-1 divide-y divide-[var(--line)] border-y border-[var(--line)]">
             {d.items.map((it) => {
               const v = poItems[it.productId] ?? { qty: it.qty, unitCost: it.lastCost };
               return (
-                <div key={it.productId} className="grid grid-cols-[1fr_72px_110px] items-center gap-2 py-2">
-                  <span className="text-sm">{it.productName}</span>
-                  <input className="input !min-h-[40px] px-2 text-sm" type="number" min={0} value={v.qty}
+                <div key={it.productId} className="grid grid-cols-[minmax(0,1fr)_58px_80px] items-center gap-2 py-2 sm:grid-cols-[minmax(0,1fr)_72px_110px]">
+                  <span className="min-w-0 truncate text-sm">{it.productName}</span>
+                  <input aria-label={`${it.productName}: jumlah dipesan`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} value={v.qty}
                     onChange={(e) => setPoItems({ ...poItems, [it.productId]: { ...v, qty: Math.max(0, Number(e.target.value) || 0) } })} />
-                  <input className="input !min-h-[40px] px-2 text-sm" type="number" min={0} value={v.unitCost}
+                  <input aria-label={`${it.productName}: harga modal per unit`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} value={v.unitCost}
                     onChange={(e) => setPoItems({ ...poItems, [it.productId]: { ...v, unitCost: Math.max(0, Number(e.target.value) || 0) } })} />
                 </div>
               );
@@ -273,7 +268,7 @@ export default function PesananDetail() {
           </div>
           <button
             className="btn mt-4 w-full"
-            disabled={!poSupplier || orderToSupplier.isPending}
+            disabled={!poSupplier || orderToSupplier.isPending || suppliers.isLoading || Boolean(suppliers.error) || !suppliers.data?.length}
             onClick={() =>
               orderToSupplier.mutate({
                 salesOrderId: order.id,
@@ -294,33 +289,33 @@ export default function PesananDetail() {
         <Modal title="Catat faktur supplier" onClose={() => setFakModal(null)}>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="label-caps">No. faktur cetak</label>
-              <input className="input mt-1" value={fakNumber} onChange={(e) => setFakNumber(e.target.value)} placeholder="mis. 8821" />
+              <label className="label-caps block" htmlFor="supplier-invoice-number">No. faktur cetak</label>
+              <input id="supplier-invoice-number" className="input mt-1" value={fakNumber} onChange={(e) => setFakNumber(e.target.value)} placeholder="mis. 8821" />
             </div>
             <div>
-              <label className="label-caps">Jatuh tempo</label>
-              <input className="input mt-1" type="date" value={fakDue} onChange={(e) => setFakDue(e.target.value)} />
+              <label className="label-caps block" htmlFor="supplier-invoice-due">Jatuh tempo</label>
+              <input id="supplier-invoice-due" className="input mt-1" type="date" value={fakDue} onChange={(e) => setFakDue(e.target.value)} />
             </div>
           </div>
           <div className="label-caps mt-4">Barang sesuai faktur</div>
-          <div className="mt-2 grid grid-cols-[1fr_58px_94px_62px_62px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
-            <span>Barang</span><span>Qty</span><span>Harga modal</span><span>Diskon %</span><span>PPN %</span>
+          <div className="mt-2 grid grid-cols-[minmax(0,1fr)_42px_74px_42px_42px] gap-1 text-[8px] font-semibold uppercase tracking-wide text-[var(--ink-soft)] sm:grid-cols-[minmax(0,1fr)_58px_94px_62px_62px] sm:gap-2 sm:text-[10px]">
+            <span className="min-w-0 truncate">Barang</span><span>Qty</span><span className="truncate">Harga modal</span><span>Diskon %</span><span>PPN %</span>
           </div>
           <div className="mt-1 divide-y divide-[var(--line)] border-y border-[var(--line)]">
             {d.pos.find((p) => p.id === fakModal)?.items.map((it) => {
               const v = fakItems[it.productId] ?? { qty: it.qty, unitCost: it.unitCost, discountPercent: 0, ppnPercent: 0 };
               const name = d.items.find((x) => x.productId === it.productId)?.productName ?? "Barang";
               return (
-                <div key={it.productId} className="grid grid-cols-[1fr_58px_94px_62px_62px] items-center gap-2 py-2">
-                  <span className="text-sm">{name}</span>
-                  <input aria-label="Jumlah barang" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} value={v.qty}
+                <div key={it.productId} className="grid grid-cols-[minmax(0,1fr)_42px_74px_42px_42px] items-center gap-1 py-2 sm:grid-cols-[minmax(0,1fr)_58px_94px_62px_62px] sm:gap-2">
+                  <span className="min-w-0 truncate text-sm" title={name}>{name}</span>
+                  <input aria-label={`${name}: jumlah`} className="input min-w-0 !min-h-[44px] px-1 text-sm sm:px-2" type="number" min={0} value={v.qty}
                     onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, qty: Math.max(0, Number(e.target.value) || 0) } })} />
-                  <input aria-label="Harga modal per unit" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} value={v.unitCost}
+                  <input aria-label={`${name}: harga modal per unit`} className="input min-w-0 !min-h-[44px] px-1 text-sm sm:px-2" type="number" min={0} value={v.unitCost}
                     onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, unitCost: Math.max(0, Number(e.target.value) || 0) } })} />
-                  <input aria-label="Diskon persen" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.discountPercent}
+                  <input aria-label={`${name}: diskon persen`} className="input min-w-0 !min-h-[44px] px-1 text-sm sm:px-2" type="number" min={0} max={100} value={v.discountPercent}
                     title="Diskon %" placeholder="Diskon %"
                     onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
-                  <input aria-label="PPN persen" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.ppnPercent}
+                  <input aria-label={`${name}: PPN persen`} className="input min-w-0 !min-h-[44px] px-1 text-sm sm:px-2" type="number" min={0} max={100} value={v.ppnPercent}
                     title="PPN %" placeholder="PPN %"
                     onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, ppnPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
                 </div>
@@ -328,8 +323,8 @@ export default function PesananDetail() {
             })}
           </div>
           <div className="mt-4">
-            <label className="label-caps">Total tercetak di faktur</label>
-            <input className="input mt-1" type="number" min={0} value={fakPrinted} onChange={(e) => setFakPrinted(Math.max(0, Number(e.target.value) || 0))} />
+            <label className="label-caps block" htmlFor="supplier-invoice-printed-total">Total tercetak di faktur</label>
+            <input id="supplier-invoice-printed-total" className="input mt-1" type="number" min={0} value={fakPrinted} onChange={(e) => setFakPrinted(Math.max(0, Number(e.target.value) || 0))} />
             {(() => {
               const computed = Object.values(fakItems).reduce((s, v) => {
                 const gross = v.qty * v.unitCost;
@@ -374,26 +369,23 @@ export default function PesananDetail() {
   );
 }
 
-function FakturRow({ fakturId }: { fakturId: number }) {
-  const list = trpc.orders.supplierInvoices.useQuery();
+function FakturRow({ faktur }: { faktur: { id: number; number: string; status: string; selisih: number } }) {
   const utils = trpc.useUtils();
   const postFaktur = trpc.orders.postSupplierInvoice.useMutation({
-    onSuccess: () => { list.refetch(); utils.orders.detail.invalidate(); },
+    onSuccess: () => { void utils.orders.detail.invalidate(); },
   });
-  const f = list.data?.find((x) => x.id === fakturId);
-  if (!f) return null;
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border border-[var(--line)] px-3 py-2">
       <div className="text-sm">
-        <b>Faktur {f.number}</b> <StatusBadge status={f.status} />
-        {f.selisih !== 0 && (
+        <b>Faktur {faktur.number}</b> <StatusBadge status={faktur.status} />
+        {faktur.selisih !== 0 && (
           <span className="ml-2 inline-flex items-center gap-1 text-xs font-semibold text-[var(--bad)]">
-            <AlertTriangle size={12} /> Selisih {rp(Math.abs(f.selisih))}
+            <AlertTriangle size={12} /> Selisih {rp(Math.abs(faktur.selisih))}
           </span>
         )}
       </div>
-      {f.status === "draft" && (
-        <button className="btn btn-accent !min-h-[36px] px-3 text-xs" disabled={postFaktur.isPending} onClick={() => postFaktur.mutate({ id: f.id })}>
+      {faktur.status === "draft" && (
+        <button className="btn btn-accent !min-h-[44px] px-3 text-xs" disabled={postFaktur.isPending} onClick={() => postFaktur.mutate({ id: faktur.id })}>
           Bukukan (jadi hutang)
         </button>
       )}

@@ -27,9 +27,9 @@ export default function Barang() {
       <Section title={editingId ? "Edit barang" : "Tambah barang"}>
         <div className="border-b border-[var(--line)] px-4 py-4 md:px-8">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <input className="input" placeholder="Nama barang" value={name} onChange={(e) => setName(e.target.value)} />
-            <input className="input" placeholder="Satuan (kotak/unit)" value={unit} onChange={(e) => setUnit(e.target.value)} />
-            <input className="input" type="number" min={0} placeholder="Harga jual standar (Rp)" value={price || ""} onChange={(e) => setPrice(Math.max(0, Number(e.target.value) || 0))} />
+            <div><label className="label-caps block" htmlFor="product-name">Nama barang</label><input id="product-name" className="input mt-1" placeholder="Nama barang" value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <div><label className="label-caps block" htmlFor="product-unit">Satuan</label><input id="product-unit" className="input mt-1" placeholder="Satuan (kotak/unit)" value={unit} onChange={(e) => setUnit(e.target.value)} /></div>
+            <div><label className="label-caps block" htmlFor="product-base-price">Harga jual standar (Rp)</label><input id="product-base-price" className="input mt-1" type="number" min={0} value={price || ""} onChange={(e) => setPrice(Math.max(0, Number(e.target.value) || 0))} /></div>
           </div>
           <label className="mt-3 flex min-h-[44px] items-center gap-3 text-sm">
             <input type="checkbox" className="h-5 w-5 accent-[var(--slate)]" checked={taxable} onChange={(e) => setTaxable(e.target.checked)} />
@@ -46,9 +46,9 @@ export default function Barang() {
           <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
             {q.data.map((p) => (
               <div key={p.id} className="px-4 py-4 md:px-8">
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="text-sm font-semibold">{p.name}</span>
-                  <div className="flex items-center gap-2"><span className="font-display text-base font-semibold">{rp(p.basePrice)}<span className="text-xs font-normal text-[var(--ink-soft)]">/{p.unit}</span></span><button className="btn btn-ghost !min-h-[36px] px-2 text-xs" onClick={() => { setEditingId(p.id); setName(p.name); setUnit(p.unit); setPrice(p.basePrice); setTaxable(p.taxable); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Pencil size={14} /> Edit</button><button className="btn btn-ghost !min-h-[36px] px-2 text-xs text-[var(--bad)]" disabled={remove.isPending} onClick={() => { if (confirm("Hapus barang ini? Data yang sudah dipakai transaksi tidak dapat dihapus.")) remove.mutate({ id: p.id }); }}><Trash2 size={14} /> Hapus</button></div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="min-w-0 break-words text-sm font-semibold">{p.name}</span>
+                  <div className="flex flex-wrap items-center gap-2"><span className="font-display text-base font-semibold">{rp(p.basePrice)}<span className="text-xs font-normal text-[var(--ink-soft)]">/{p.unit}</span></span><button className="btn btn-ghost !min-h-[44px] px-2 text-xs" onClick={() => { setEditingId(p.id); setName(p.name); setUnit(p.unit); setPrice(p.basePrice); setTaxable(p.taxable); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Pencil size={14} /> Edit</button><button className="btn btn-ghost !min-h-[44px] px-2 text-xs text-[var(--bad)]" disabled={remove.isPending} onClick={() => { if (confirm("Hapus barang ini? Data yang sudah dipakai transaksi tidak dapat dihapus.")) remove.mutate({ id: p.id }); }}><Trash2 size={14} /> Hapus</button></div>
                 </div>
                 <div className="mt-1 flex flex-wrap gap-x-4 text-xs text-[var(--ink-soft)]">
                   <span>{p.sku}</span>

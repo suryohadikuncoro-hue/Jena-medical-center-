@@ -61,6 +61,7 @@ export default function Pembayaran() {
               <button
                 key={dir}
                 onClick={() => setDirection(dir)}
+                aria-pressed={direction === dir}
                 className={`min-h-[44px] text-sm font-semibold transition-colors duration-200 ${
                   direction === dir ? "bg-[var(--ink)] text-[var(--paper)]" : "hover:bg-[var(--paper-2)]"
                 }`}
@@ -70,33 +71,57 @@ export default function Pembayaran() {
             ))}
           </div>
 
+          {open.isLoading && <p className="mt-3 text-sm text-[var(--ink-soft)]" role="status">Memuat tagihan terbuka…</p>}
+          {open.error && (
+            <div className="mt-3 flex flex-wrap items-center gap-3" role="alert">
+              <p className="text-sm text-[var(--bad)]">Daftar tagihan gagal dimuat: {open.error.message}</p>
+              <button className="btn btn-ghost" type="button" onClick={() => void open.refetch()}>Coba lagi</button>
+            </div>
+          )}
+
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             {direction === "in" ? (
-              <select className="select" value={invoiceId} onChange={(e) => setInvoiceId(Number(e.target.value))}>
-                <option value={0}>Pilih invoice…</option>
-                {(open.data?.invoices ?? []).map((i) => (
-                  <option key={i.id} value={i.id}>{i.number} · {i.customerName} · sisa {rp(i.remaining)}</option>
-                ))}
-              </select>
+              <div>
+                <label className="label-caps block" htmlFor="payment-invoice">Invoice pelanggan</label>
+                <select id="payment-invoice" className="select mt-1" disabled={open.isLoading || Boolean(open.error) || !open.data} value={invoiceId} onChange={(e) => setInvoiceId(Number(e.target.value))}>
+                  <option value={0}>Pilih invoice…</option>
+                  {(open.data?.invoices ?? []).map((i) => (
+                    <option key={i.id} value={i.id}>{i.number} · {i.customerName} · sisa {rp(i.remaining)}</option>
+                  ))}
+                </select>
+              </div>
             ) : (
-              <select className="select" value={fakturId} onChange={(e) => setFakturId(Number(e.target.value))}>
-                <option value={0}>Pilih faktur supplier…</option>
-                {(open.data?.supplierInvoices ?? []).map((f) => (
-                  <option key={f.id} value={f.id}>{f.number} · {f.supplierName} · sisa {rp(f.remaining)}</option>
-                ))}
-              </select>
+              <div>
+                <label className="label-caps block" htmlFor="payment-supplier-invoice">Faktur supplier</label>
+                <select id="payment-supplier-invoice" className="select mt-1" disabled={open.isLoading || Boolean(open.error) || !open.data} value={fakturId} onChange={(e) => setFakturId(Number(e.target.value))}>
+                  <option value={0}>Pilih faktur supplier…</option>
+                  {(open.data?.supplierInvoices ?? []).map((f) => (
+                    <option key={f.id} value={f.id}>{f.number} · {f.supplierName} · sisa {rp(f.remaining)}</option>
+                  ))}
+                </select>
+              </div>
             )}
-            <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            <input className="input" type="number" min={0} placeholder="Jumlah (Rp)" value={amount || ""} onChange={(e) => setAmount(Math.max(0, Number(e.target.value) || 0))} />
-            <select className="select" value={method} onChange={(e) => setMethod(e.target.value as typeof method)}>
-              <option value="transfer">Transfer bank</option>
-              <option value="cash">Tunai</option>
-              <option value="other">Lainnya</option>
-            </select>
+            <div>
+              <label className="label-caps block" htmlFor="payment-date">Tanggal pembayaran</label>
+              <input id="payment-date" className="input mt-1" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+            <div>
+              <label className="label-caps block" htmlFor="payment-amount">Jumlah (Rp)</label>
+              <input id="payment-amount" className="input mt-1" type="number" min={0} value={amount || ""} onChange={(e) => setAmount(Math.max(0, Number(e.target.value) || 0))} />
+            </div>
+            <div>
+              <label className="label-caps block" htmlFor="payment-method">Metode pembayaran</label>
+              <select id="payment-method" className="select mt-1" value={method} onChange={(e) => setMethod(e.target.value as typeof method)}>
+                <option value="transfer">Transfer bank</option>
+                <option value="cash">Tunai</option>
+                <option value="other">Lainnya</option>
+              </select>
+            </div>
           </div>
-          <input className="input mt-3" placeholder="Catatan (opsional)" value={note} onChange={(e) => setNote(e.target.value)} />
-          {error && <p className="mt-2 text-sm font-medium text-[var(--bad)]">{error}</p>}
-          <button className="btn mt-3 w-full md:w-auto" onClick={submit} disabled={record.isPending}>
+          <label className="label-caps mt-3 block" htmlFor="payment-note">Catatan (opsional)</label>
+          <input id="payment-note" className="input mt-1" placeholder="Catatan (opsional)" value={note} onChange={(e) => setNote(e.target.value)} />
+          {error && <p className="mt-2 text-sm font-medium text-[var(--bad)]" role="alert">{error}</p>}
+          <button className="btn mt-3 w-full md:w-auto" onClick={submit} disabled={record.isPending || open.isLoading || Boolean(open.error) || !open.data}>
             {record.isPending ? "Menyimpan…" : "Simpan pembayaran"}
           </button>
           <p className="mt-2 text-xs text-[var(--ink-soft)]">Jurnal kas/bank dan piutang/hutang terbentuk otomatis.</p>

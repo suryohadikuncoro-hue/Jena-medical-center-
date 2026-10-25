@@ -57,8 +57,14 @@ Unique constraint untuk sumber posting jurnal sengaja belum diterapkan karena hi
 
 Perubahan sudah dicommit dan dipush ke GitHub pada commit `f75dcc3`. Working tree bersih.
 
-Migration Supabase berhasil diterapkan dan health endpoint Worker production merespons HTTP 200. Deployment Worker untuk kode backend belum dapat dilakukan dari sandbox karena Wrangler meminta OAuth Cloudflare interaktif dan browser tidak tersedia. Karena itu, backend production belum boleh dianggap sudah menggunakan implementasi Fase 1 sampai deployment Worker dilakukan melalui sesi Cloudflare yang terautentikasi.
+Worker production kemudian diperbarui dari branch P2 yang memuat implementasi Fase 1 pada commit `8e8b5c1`, versi `11017661-bb3b-4a87-b0d7-99018c7a6ae3`; endpoint `/health` merespons HTTP 200. Smoke test production authenticated untuk alur transaksi Fase 1 belum dijalankan, sehingga deployment ini tidak membuktikan seluruh alur bisnis production.
 
 ## Rencana lanjutan
 
-Setelah deployment Worker berhasil, lakukan smoke test authenticated untuk pembayaran, invoice issue, posting faktur supplier, overpayment, stok tidak cukup, dan update draft invoice dengan item silang. Setelah histori jurnal duplikat direkonsiliasi, tambahkan unique constraint sumber posting dan validasi penuh semua constraint `NOT VALID`. Kemudian lanjutkan perbaikan P2 dan baru masuk ke desain UI/UX visual.
+Lakukan smoke test production authenticated untuk pembayaran, invoice issue, posting faktur supplier, overpayment, stok tidak cukup, dan update draft invoice dengan item silang. Setelah histori jurnal duplikat direkonsiliasi, tambahkan unique constraint sumber posting dan validasi penuh semua constraint `NOT VALID`. Untuk rilis frontend, tinjau preview P2 dan lakukan pemeriksaan viewport 320–360 px serta query failure/retry sebelum merge ke `main`. Setelah itu, lanjutkan pekerjaan desain UI/UX visual.
+
+## Adendum tindak lanjut P2 — 26 Oktober 2026
+
+Perbaikan P2 berikut diterapkan pada branch `fix/p2-quality-accessibility-mobile` dan dipush dalam commit `8e8b5c1`: penanganan loading/error/retry untuk query harga khusus, tagihan pembayaran, supplier, dan buku besar; pencegahan submit pesanan sebelum harga khusus pelanggan berhasil dimuat; penghapusan query faktur supplier duplikat pada detail pesanan; label aksesibel pada field operasional; penggunaan primitive Radix Dialog untuk focus management; target sentuh tombol/input sekurangnya 44 px; serta perbaikan grid modal faktur dan wrapping supplier untuk viewport sempit. Preview Cloudflare Pages dari branch tersedia di `https://cf5af5ad.jena-medical-center.pages.dev` dan merespons HTTP 200.
+
+Validasi lokal: `pnpm run check`, `pnpm run lint`, dan `pnpm run build` lulus; `pnpm test` melaporkan 4 tes lulus dan 5 smoke test dilewati karena tidak ada PostgreSQL lokal. Worker `jena-medical-api` versi `11017661-bb3b-4a87-b0d7-99018c7a6ae3` dideploy ke production pada 26 Oktober 2026, menerima 100% traffic, dan endpoint `/health` merespons HTTP 200; secret `SUPABASE_PUBLISHABLE_KEY` tetap terpasang. Frontend branch P2 masih berupa preview; Pages production belum dipromosikan dari branch `main`. Build masih menampilkan peringatan ukuran bundle. Pemeriksaan visual/manual pada perangkat 320–360 px serta uji alur query gagal/retry belum dijalankan, sehingga hasil ini tidak menyatakan kesiapan production penuh.
