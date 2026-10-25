@@ -1,12 +1,14 @@
 import { NavLink, Outlet } from "react-router";
-import { Home, ClipboardList, FileText, BarChart3, Menu as MenuIcon } from "lucide-react";
+import { Home, ClipboardList, FileText, BarChart3, Menu as MenuIcon, CreditCard, ReceiptText } from "lucide-react";
 
 const NAV = [
   { to: "/", label: "Beranda", icon: Home, end: true },
   { to: "/pesanan", label: "Pesanan", icon: ClipboardList },
   { to: "/invoice", label: "Invoice", icon: FileText },
+  { to: "/faktur", label: "Faktur", icon: ReceiptText },
+  { to: "/pembayaran", label: "Pembayaran", icon: CreditCard },
   { to: "/laporan", label: "Laporan", icon: BarChart3 },
-  { to: "/lainnya", label: "Lainnya", icon: MenuIcon },
+  { to: "/lainnya", label: "Master Data", icon: MenuIcon },
 ];
 
 export default function AppShell() {
@@ -55,7 +57,7 @@ export default function AppShell() {
 
       {/* Mobile bottom tabs */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[var(--line-strong)] bg-[var(--paper)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 flex overflow-x-auto border-t border-[var(--line-strong)] bg-[var(--paper)] md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {NAV.map((n) => (
@@ -64,7 +66,7 @@ export default function AppShell() {
             to={n.to}
             end={n.end}
             className={({ isActive }) =>
-              `flex min-h-[56px] flex-col items-center justify-center gap-1 text-[0.625rem] font-semibold uppercase tracking-wide transition-colors duration-200 ${
+              `flex min-h-[56px] min-w-[86px] flex-1 flex-col items-center justify-center gap-1 text-[0.625rem] font-semibold uppercase tracking-wide transition-colors duration-200 ${
                 isActive ? "bg-[var(--ink)] text-[var(--paper)]" : "text-[var(--ink-soft)]"
               }`
             }

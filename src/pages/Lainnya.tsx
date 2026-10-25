@@ -1,19 +1,17 @@
 import { Link } from "react-router";
-import { Users, Truck, Package, CreditCard, ReceiptText, ArrowRight } from "lucide-react";
+import { Users, Truck, Package, ArrowRight } from "lucide-react";
 import { PageHeader, Section } from "@/components/bits";
 
 const MENU = [
   { to: "/pelanggan", label: "Pelanggan", desc: "Kontak, termin pembayaran, alamat", icon: Users },
   { to: "/supplier", label: "Supplier", desc: "Kontak pemasok barang medis", icon: Truck },
   { to: "/barang", label: "Barang dan harga", desc: "Harga jual, modal terakhir, HPP rata-rata, stok", icon: Package },
-  { to: "/pembayaran", label: "Pembayaran", desc: "Terima tagihan pelanggan, bayar faktur supplier", icon: CreditCard },
-  { to: "/faktur", label: "Faktur supplier", desc: "Cek selisih, bukukan jadi hutang", icon: ReceiptText },
 ];
 
 export default function Lainnya() {
   return (
     <div>
-      <PageHeader title="Menu" sub="Menu pendukung Jena Business Suite" />
+        <PageHeader title="Master Data" sub="Kelola data dasar pelanggan, supplier, dan barang" />
       <Section>
         <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
           {MENU.map((m) => (
