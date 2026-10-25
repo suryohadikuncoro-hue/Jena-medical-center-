@@ -117,7 +117,7 @@ export default function Beranda() {
       label: "Pesanan baru",
       value: d.baruCount,
       detail: "Belum diproses ke supplier",
-      badge: d.baruCount > 0 ? "Perlu diproses" : "Terkendali",
+      badge: d.baruCount > 0 ? "Perlu diproses" : "Tidak ada antrean",
       href: "/pesanan?status=draft",
       icon: ClipboardList,
       tone: "violet",
@@ -332,7 +332,7 @@ export default function Beranda() {
                 Sebelum tutup buku: {d.perluDiselesaikan.pajakMasukBelumLengkap} faktur pajak belum lengkap · {d.perluDiselesaikan.fakturSelisih} faktur selisih · {d.perluDiselesaikan.drafInvoice} draf invoice.
               </p>
             </div>
-            <p className="px-4 pb-5 text-[0.68rem] leading-relaxed text-[#9097a6] sm:px-5">
+            <p className="px-4 pb-5 text-[0.68rem] leading-relaxed text-[#667085] sm:px-5">
               Ringkasan PPN bukan SPT atau e-Faktur. Draf belum menjadi pendapatan, piutang, atau hutang.
             </p>
           </Surface>
