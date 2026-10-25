@@ -172,19 +172,24 @@ export const invoicesRouter = createRouter({
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const [inv] = await db.select().from(invoices).where(eq(invoices.id, input.id)).limit(1);
-      if (!inv || inv.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Hanya draft invoice yang bisa diubah" });
-      for (const item of input.items) {
-        await db.update(invoiceItems).set({ discountPercent: item.discountPercent, ppnPercent: item.ppnPercent }).where(eq(invoiceItems.id, item.id));
-      }
-      const rows = await db.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, input.id));
-      const subtotal = rows.reduce((s, r) => s + r.qty * r.unitPrice - Math.round(r.qty * r.unitPrice * r.discountPercent / 100), 0);
-      const ppnAmount = rows.reduce((s, r) => {
-        const net = r.qty * r.unitPrice - Math.round(r.qty * r.unitPrice * r.discountPercent / 100);
-        return s + Math.round(net * r.ppnPercent / 100);
-      }, 0);
-      await db.update(invoices).set({ subtotal, ppnAmount, total: subtotal + ppnAmount }).where(eq(invoices.id, input.id));
-      return { ok: true, subtotal, ppnAmount, total: subtotal + ppnAmount };
+      return db.transaction(async (tx) => {
+        const [inv] = await tx.select().from(invoices).where(eq(invoices.id, input.id)).limit(1);
+        if (!inv || inv.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Hanya draft invoice yang bisa diubah" });
+        const ownedItems = await tx.select({ id: invoiceItems.id }).from(invoiceItems).where(eq(invoiceItems.invoiceId, input.id));
+        const ownedIds = new Set(ownedItems.map((item) => item.id));
+        if (input.items.some((item) => !ownedIds.has(item.id))) throw new TRPCError({ code: "BAD_REQUEST", message: "Ada item yang bukan milik invoice ini" });
+        for (const item of input.items) {
+          await tx.update(invoiceItems).set({ discountPercent: item.discountPercent, ppnPercent: item.ppnPercent }).where(and(eq(invoiceItems.id, item.id), eq(invoiceItems.invoiceId, input.id)));
+        }
+        const rows = await tx.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, input.id));
+        const subtotal = rows.reduce((s, r) => s + r.qty * r.unitPrice - Math.round(r.qty * r.unitPrice * r.discountPercent / 100), 0);
+        const ppnAmount = rows.reduce((s, r) => {
+          const net = r.qty * r.unitPrice - Math.round(r.qty * r.unitPrice * r.discountPercent / 100);
+          return s + Math.round(net * r.ppnPercent / 100);
+        }, 0);
+        await tx.update(invoices).set({ subtotal, ppnAmount, total: subtotal + ppnAmount }).where(eq(invoices.id, input.id));
+        return { ok: true, subtotal, ppnAmount, total: subtotal + ppnAmount };
+      });
     }),
 
   // Terbitkan → jurnal piutang/pendapatan/PPN + HPP otomatis

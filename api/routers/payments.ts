@@ -77,6 +77,11 @@ export const paymentsRouter = createRouter({
         amount: z.number().int().min(1),
         method: z.enum(["transfer", "cash", "other"]).default("transfer"),
         note: z.string().optional(),
+      }).superRefine((value, ctx) => {
+        const refs = Number(Boolean(value.invoiceId)) + Number(Boolean(value.supplierInvoiceId));
+        if (refs !== 1) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Pilih tepat satu invoice atau faktur supplier." });
+        if (value.direction === "in" && !value.invoiceId) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["invoiceId"], message: "Pembayaran masuk harus memilih invoice." });
+        if (value.direction === "out" && !value.supplierInvoiceId) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["supplierInvoiceId"], message: "Pembayaran keluar harus memilih faktur supplier." });
       }),
     )
     .mutation(async ({ input }) => {

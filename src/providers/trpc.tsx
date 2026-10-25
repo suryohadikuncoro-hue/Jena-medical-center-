@@ -45,10 +45,6 @@ async function fetchWithAuth(input: RequestInfo | URL, init?: RequestInit) {
     const refreshed = await refreshSession();
     if (refreshed) response = await run(refreshed.access_token);
   }
-  if (response.status >= 500) {
-    await new Promise((resolve) => window.setTimeout(resolve, 500));
-    response = await run(getAccessToken());
-  }
   return response;
 }
 
