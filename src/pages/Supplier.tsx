@@ -22,8 +22,8 @@ export default function Supplier() {
       <Section title={editingId ? "Edit supplier" : "Tambah supplier"}>
         <div className="border-b border-[var(--line)] px-4 py-4 md:px-8">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <input className="input" placeholder="Nama supplier" value={name} onChange={(e) => setName(e.target.value)} />
-            <input className="input" placeholder="Telepon (opsional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <div><label className="label-caps block" htmlFor="supplier-name">Nama supplier</label><input id="supplier-name" className="input mt-1" placeholder="Nama supplier" value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <div><label className="label-caps block" htmlFor="supplier-phone">Telepon (opsional)</label><input id="supplier-phone" className="input mt-1" placeholder="Telepon (opsional)" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
           </div>
           <button className="btn mt-3" disabled={!name || create.isPending || update.isPending} onClick={() => editingId ? update.mutate({ id: editingId, name, phone: phone || undefined }) : create.mutate({ name, phone: phone || undefined })}>
             {editingId ? "Simpan perubahan" : "Simpan supplier"}
@@ -35,14 +35,14 @@ export default function Supplier() {
         {q.data.length === 0 ? <Empty text="Belum ada supplier." /> : (
           <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
             {q.data.map((s) => (
-              <div key={s.id} className="flex items-center justify-between gap-3 px-4 py-4 md:px-8">
-                <div>
-                <div className="text-sm font-semibold">{s.name}</div>
-                <div className="text-xs text-[var(--ink-soft)]">{s.code}{s.phone ? ` · ${s.phone}` : ""}</div>
+              <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-8">
+                <div className="min-w-0 flex-1">
+                <div className="break-words text-sm font-semibold">{s.name}</div>
+                <div className="break-words text-xs text-[var(--ink-soft)]">{s.code}{s.phone ? ` · ${s.phone}` : ""}</div>
                 </div>
-                <div className="flex gap-2">
-                  <button className="btn btn-ghost !min-h-[40px] px-3 text-xs" onClick={() => { setEditingId(s.id); setName(s.name); setPhone(s.phone ?? ""); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Pencil size={14} /> Edit</button>
-                  <button className="btn btn-ghost !min-h-[40px] px-3 text-xs text-[var(--bad)]" disabled={remove.isPending} onClick={() => { if (confirm("Hapus supplier ini? Data yang sudah dipakai transaksi tidak dapat dihapus.")) remove.mutate({ id: s.id }); }}><Trash2 size={14} /> Hapus</button>
+                <div className="flex flex-wrap gap-2">
+                  <button className="btn btn-ghost !min-h-[44px] px-3 text-xs" onClick={() => { setEditingId(s.id); setName(s.name); setPhone(s.phone ?? ""); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Pencil size={14} /> Edit</button>
+                  <button className="btn btn-ghost !min-h-[44px] px-3 text-xs text-[var(--bad)]" disabled={remove.isPending} onClick={() => { if (confirm("Hapus supplier ini? Data yang sudah dipakai transaksi tidak dapat dihapus.")) remove.mutate({ id: s.id }); }}><Trash2 size={14} /> Hapus</button>
                 </div>
               </div>
             ))}

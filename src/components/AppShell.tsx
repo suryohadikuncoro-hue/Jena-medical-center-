@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router";
 import { useState } from "react";
 import { Home, ClipboardList, FileText, BarChart3, Menu as MenuIcon, CreditCard, ReceiptText, X } from "lucide-react";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const NAV = [
   { to: "/", label: "Beranda", icon: Home, end: true },
@@ -89,6 +90,8 @@ export default function AppShell() {
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
           className="flex min-h-[56px] flex-col items-center justify-center gap-1 text-[0.625rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)] transition-colors duration-200 hover:bg-[var(--paper-2)]"
         >
           <MenuIcon size={18} strokeWidth={1.75} />
@@ -96,34 +99,38 @@ export default function AppShell() {
         </button>
       </nav>
 
-      {menuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Menu aplikasi">
-          <button type="button" className="absolute inset-0 h-full w-full bg-black/30" aria-label="Tutup menu" onClick={() => setMenuOpen(false)} />
-          <div className="absolute inset-x-4 bottom-20 max-h-[75dvh] overflow-y-auto border border-[var(--line-strong)] bg-[var(--paper)] shadow-2xl" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
-            <div className="flex items-center justify-between border-b border-[var(--line-strong)] px-5 py-4">
-              <div>
-                <div className="font-display text-lg font-semibold">Menu</div>
-                <div className="text-xs text-[var(--ink-soft)]">Pilih fitur yang ingin dibuka</div>
-              </div>
-              <button type="button" className="btn btn-ghost min-h-0 px-2 py-2" aria-label="Tutup menu" onClick={() => setMenuOpen(false)}><X size={18} /></button>
+      <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
+        <DialogContent
+          showCloseButton={false}
+          overlayClassName="md:hidden"
+          className="inset-x-4 bottom-20 left-4 top-auto grid h-fit max-h-[75dvh] w-auto max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none border-[var(--line-strong)] bg-[var(--paper)] p-0 shadow-2xl sm:max-w-none md:hidden"
+          style={{ marginBottom: "env(safe-area-inset-bottom)" }}
+        >
+          <DialogHeader className="flex-row items-center justify-between border-b border-[var(--line-strong)] px-5 py-4 text-left">
+            <div>
+              <DialogTitle className="font-display text-lg font-semibold">Menu</DialogTitle>
+              <DialogDescription className="text-xs text-[var(--ink-soft)]">Pilih fitur yang ingin dibuka</DialogDescription>
             </div>
-            <nav className="grid grid-cols-2">
-              {NAV.map((n) => (
-                <NavLink
-                  key={n.to}
-                  to={n.to}
-                  end={n.end}
-                  onClick={() => setMenuOpen(false)}
-                  className={({ isActive }) => `flex min-h-[64px] items-center gap-3 border-b border-r border-[var(--line)] px-5 text-sm font-semibold ${isActive ? "bg-[var(--ink)] text-[var(--paper)]" : "hover:bg-[var(--paper-2)]"}`}
-                >
-                  <n.icon size={18} strokeWidth={1.75} />
-                  {n.label}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-        </div>
-      )}
+            <DialogClose asChild>
+              <button type="button" className="btn btn-ghost size-11 min-h-[44px] p-0" aria-label="Tutup menu"><X size={18} /></button>
+            </DialogClose>
+          </DialogHeader>
+          <nav className="grid grid-cols-2" aria-label="Menu aplikasi">
+            {NAV.map((n) => (
+              <NavLink
+                key={n.to}
+                to={n.to}
+                end={n.end}
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) => `flex min-h-[64px] items-center gap-3 border-b border-r border-[var(--line)] px-5 text-sm font-semibold ${isActive ? "bg-[var(--ink)] text-[var(--paper)]" : "hover:bg-[var(--paper-2)]"}`}
+              >
+                <n.icon size={18} strokeWidth={1.75} />
+                {n.label}
+              </NavLink>
+            ))}
+          </nav>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

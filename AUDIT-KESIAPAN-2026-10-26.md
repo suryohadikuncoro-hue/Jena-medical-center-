@@ -62,3 +62,9 @@ Migration Supabase berhasil diterapkan dan health endpoint Worker production mer
 ## Rencana lanjutan
 
 Setelah deployment Worker berhasil, lakukan smoke test authenticated untuk pembayaran, invoice issue, posting faktur supplier, overpayment, stok tidak cukup, dan update draft invoice dengan item silang. Setelah histori jurnal duplikat direkonsiliasi, tambahkan unique constraint sumber posting dan validasi penuh semua constraint `NOT VALID`. Kemudian lanjutkan perbaikan P2 dan baru masuk ke desain UI/UX visual.
+
+## Adendum tindak lanjut P2 — 26 Oktober 2026
+
+Perbaikan P2 berikut telah diterapkan secara lokal pada branch `fix/p2-quality-accessibility-mobile`: penanganan loading/error/retry untuk query harga khusus, tagihan pembayaran, supplier, dan buku besar; pencegahan submit pesanan sebelum harga khusus pelanggan berhasil dimuat; penghapusan query faktur supplier duplikat pada detail pesanan; label aksesibel pada field operasional; penggunaan primitive Radix Dialog untuk focus management; target sentuh tombol/input sekurangnya 44 px; serta perbaikan grid modal faktur dan wrapping supplier untuk viewport sempit.
+
+Validasi lokal terbaru: `pnpm run check`, `pnpm run lint`, dan `pnpm run build` lulus; `pnpm test` melaporkan 4 tes lulus dan 5 smoke test dilewati karena tidak ada PostgreSQL lokal. Build masih menampilkan peringatan ukuran bundle frontend. Pemeriksaan visual/manual pada perangkat 320–360 px serta uji alur query gagal/retry belum dijalankan. Perubahan ini belum dipush atau dideploy; hasil ini tidak menyatakan kesiapan production.

@@ -48,7 +48,7 @@ export default function Faktur() {
                   {f.status !== "draft" && f.remaining > 0 && <span className="text-[var(--ink-soft)]">Sisa hutang {rp(f.remaining)}</span>}
                   {f.status === "draft" && (
                     <button
-                      className="btn btn-accent !min-h-[36px] px-3 text-xs"
+                      className="btn btn-accent !min-h-[44px] px-3 text-xs"
                       disabled={post.isPending || f.selisih !== 0}
                       title={f.selisih !== 0 ? "Perbaiki selisih dulu sebelum dibukukan" : undefined}
                       onClick={() => post.mutate({ id: f.id })}

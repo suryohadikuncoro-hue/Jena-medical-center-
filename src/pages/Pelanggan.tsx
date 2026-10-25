@@ -28,10 +28,10 @@ export default function Pelanggan() {
       <Section title={editingId ? "Edit pelanggan" : "Tambah pelanggan"}>
         <div className="border-b border-[var(--line)] px-4 py-4 md:px-8">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <input className="input" placeholder="Nama klinik / pelanggan" value={name} onChange={(e) => setName(e.target.value)} />
-            <input className="input" placeholder="Nomor WhatsApp (08…)" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <input className="input" placeholder="Alamat" value={address} onChange={(e) => setAddress(e.target.value)} />
-            <input className="input" type="number" min={0} placeholder="Termin (hari)" value={termDays} onChange={(e) => setTermDays(Math.max(0, Number(e.target.value) || 0))} />
+            <div><label className="label-caps block" htmlFor="customer-name">Nama pelanggan</label><input id="customer-name" className="input mt-1" placeholder="Nama klinik / pelanggan" value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <div><label className="label-caps block" htmlFor="customer-phone">Nomor WhatsApp</label><input id="customer-phone" className="input mt-1" placeholder="Nomor WhatsApp (08…)" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+            <div><label className="label-caps block" htmlFor="customer-address">Alamat</label><input id="customer-address" className="input mt-1" placeholder="Alamat" value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+            <div><label className="label-caps block" htmlFor="customer-terms">Termin pembayaran (hari)</label><input id="customer-terms" className="input mt-1" type="number" min={0} value={termDays} onChange={(e) => setTermDays(Math.max(0, Number(e.target.value) || 0))} /></div>
           </div>
           <button
             className="btn mt-3"
@@ -59,9 +59,9 @@ export default function Pelanggan() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {wa && <a className="btn btn-ghost !min-h-[40px] px-3 text-xs" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp</a>}
-                    <button className="btn btn-ghost !min-h-[40px] px-3 text-xs" onClick={() => { setEditingId(c.id); setName(c.name); setPhone(c.phone ?? ""); setAddress(c.address ?? ""); setTermDays(c.termDays); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Pencil size={14} /> Edit</button>
-                    <button className="btn btn-ghost !min-h-[40px] px-3 text-xs text-[var(--bad)]" disabled={remove.isPending} onClick={() => { if (confirm("Hapus pelanggan ini? Data yang sudah dipakai pesanan tidak dapat dihapus.")) remove.mutate({ id: c.id }); }}><Trash2 size={14} /> Hapus</button>
+                    {wa && <a className="btn btn-ghost !min-h-[44px] px-3 text-xs" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer"><MessageCircle size={14} /> WhatsApp</a>}
+                    <button className="btn btn-ghost !min-h-[44px] px-3 text-xs" onClick={() => { setEditingId(c.id); setName(c.name); setPhone(c.phone ?? ""); setAddress(c.address ?? ""); setTermDays(c.termDays); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Pencil size={14} /> Edit</button>
+                    <button className="btn btn-ghost !min-h-[44px] px-3 text-xs text-[var(--bad)]" disabled={remove.isPending} onClick={() => { if (confirm("Hapus pelanggan ini? Data yang sudah dipakai pesanan tidak dapat dihapus.")) remove.mutate({ id: c.id }); }}><Trash2 size={14} /> Hapus</button>
                   </div>
                 </div>
               );
@@ -71,17 +71,25 @@ export default function Pelanggan() {
       </Section>
       <Section title="Harga khusus pelanggan" note="Atur harga jual berbeda untuk setiap pelanggan. Margin dihitung terhadap modal terakhir.">
         <div className="border-b border-[var(--line)] px-4 py-4 md:px-8">
-          <select className="select max-w-md" value={selectedCustomer} onChange={(e) => setSelectedCustomer(Number(e.target.value) || "")}>
+          <label className="label-caps block" htmlFor="special-price-customer">Pelanggan</label>
+          <select id="special-price-customer" className="select mt-1 max-w-md" value={selectedCustomer} onChange={(e) => setSelectedCustomer(Number(e.target.value) || "")}>
             <option value="">Pilih pelanggan…</option>
             {q.data.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          {selectedCustomer && prices.data && (
+          {selectedCustomer && prices.isLoading && <p className="mt-4 text-sm text-[var(--ink-soft)]" role="status">Memuat daftar harga…</p>}
+          {selectedCustomer && prices.error && (
+            <div className="mt-4 flex flex-wrap items-center gap-3" role="alert">
+              <p className="text-sm text-[var(--bad)]">Harga khusus gagal dimuat: {prices.error.message}</p>
+              <button className="btn btn-ghost" type="button" onClick={() => void prices.refetch()}>Coba lagi</button>
+            </div>
+          )}
+          {selectedCustomer && prices.data && (prices.data.length === 0 ? <Empty text="Belum ada produk yang dapat diatur harga khususnya." /> : (
             <div className="mt-4 divide-y divide-[var(--line)] border-y border-[var(--line)]">
               {prices.data.map((p) => (
                 <PriceRow key={p.productId} product={p} pending={setPrice.isPending} onSave={(price) => setPrice.mutate({ customerId: Number(selectedCustomer), productId: p.productId, price })} />
               ))}
             </div>
-          )}
+          ))}
         </div>
       </Section>
     </div>
@@ -97,9 +105,12 @@ function PriceRow({ product, pending, onSave }: { product: { productId: number; 
         <div className="text-sm font-semibold">{product.productName}</div>
         <div className="text-xs text-[var(--ink-soft)]">Standar {rp(product.basePrice)} · modal {rp(product.lastCost)} · {product.unit}</div>
       </div>
-      <input className="input" type="number" min={0} value={price} onChange={(e) => setPrice(Math.max(0, Number(e.target.value) || 0))} />
+      <div>
+        <label className="sr-only" htmlFor={`special-price-${product.productId}`}>Harga khusus untuk {product.productName} (Rp)</label>
+        <input id={`special-price-${product.productId}`} className="input" type="number" min={0} value={price} onChange={(e) => setPrice(Math.max(0, Number(e.target.value) || 0))} />
+      </div>
       <span className={`text-sm font-semibold ${margin < 0 ? "text-[var(--bad)]" : "text-[var(--ok)]"}`}>Margin {margin}%</span>
-      <button className="btn btn-ghost !min-h-[40px] px-3 text-xs" disabled={pending} onClick={() => onSave(price)}>{product.isSpecial ? "Update harga" : "Simpan harga"}</button>
+      <button className="btn btn-ghost !min-h-[44px] px-3 text-xs" disabled={pending} onClick={() => onSave(price)}>{product.isSpecial ? "Update harga" : "Simpan harga"}</button>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from "react-router";
 import { Plus, Trash2 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { todayLocal, rp } from "@/lib/format";
-import { PageHeader, Section, Loading } from "@/components/bits";
+import { PageHeader, Section, Loading, LoadError } from "@/components/bits";
 
 type Row = { productId: number; qty: number; unitPrice: number; priceSource: "standar" | "khusus" | "manual" };
 
@@ -49,6 +49,7 @@ export default function PesananBaru() {
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
   const pickProduct = (i: number, productId: number) => {
+    if (!customerId || !customerPrices.data || customerPrices.isLoading || customerPrices.error) return;
     const p = prodMap.get(productId);
     const special = priceMap.get(productId);
     setRow(i, { productId, unitPrice: special?.price ?? p?.basePrice ?? 0, priceSource: special?.isSpecial ? "khusus" : "standar" });
@@ -64,7 +65,10 @@ export default function PesananBaru() {
     else create.mutate(payload, { onSuccess: (r) => navigate(`/pesanan/${r.id}`), onError: (e) => setError(e.message) });
   };
 
-  if (customers.isLoading || products.isLoading || (editId && existing.isLoading)) return <Loading />;
+  if (customers.error) return <LoadError message={customers.error.message} retry={() => customers.refetch()} />;
+  if (products.error) return <LoadError message={products.error.message} retry={() => products.refetch()} />;
+  if (editId && existing.error) return <LoadError message={existing.error.message} retry={() => existing.refetch()} />;
+  if (customers.isLoading || products.isLoading || !customers.data || !products.data || (editId && (existing.isLoading || !existing.data))) return <Loading />;
 
   return (
     <div>
@@ -72,16 +76,30 @@ export default function PesananBaru() {
 
       <Section title="Pelanggan">
         <div className="grid grid-cols-1 gap-3 px-4 pb-4 md:grid-cols-2 md:px-8">
-          <select className="select" value={customerId} onChange={(e) => { setCustomerId(Number(e.target.value) || ""); setRows((rs) => rs.map((r) => ({ ...r, productId: 0, unitPrice: 0, priceSource: "standar" }))); }}>
-            <option value="">Pilih pelanggan…</option>
-            {(customers.data ?? []).map((c) => (
-              <option key={c.id} value={c.id}>{c.name} · termin {c.termDays} hari</option>
-            ))}
-          </select>
-          <input className="input" type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
+          <div>
+            <label className="label-caps block" htmlFor="order-customer">Pelanggan</label>
+            <select id="order-customer" className="select mt-1" value={customerId} onChange={(e) => { setCustomerId(Number(e.target.value) || ""); setRows((rs) => rs.map((r) => ({ ...r, productId: 0, unitPrice: 0, priceSource: "standar" }))); }}>
+              <option value="">Pilih pelanggan…</option>
+              {customers.data.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} · termin {c.termDays} hari</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label-caps block" htmlFor="order-date">Tanggal pesanan</label>
+            <input id="order-date" className="input mt-1" type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
+          </div>
         </div>
         <div className="px-4 pb-4 md:px-8">
-          <input className="input" placeholder="Catatan (opsional)" value={note} onChange={(e) => setNote(e.target.value)} />
+          <label className="label-caps block" htmlFor="order-note">Catatan (opsional)</label>
+          <input id="order-note" className="input mt-1" placeholder="Catatan (opsional)" value={note} onChange={(e) => setNote(e.target.value)} />
+          {customerId && customerPrices.isLoading && <p className="mt-2 text-sm text-[var(--ink-soft)]" role="status">Memuat harga khusus pelanggan…</p>}
+          {customerId && customerPrices.error && (
+            <div className="mt-2 flex flex-wrap items-center gap-3" role="alert">
+              <p className="text-sm text-[var(--bad)]">Harga khusus gagal dimuat: {customerPrices.error.message}</p>
+              <button className="btn btn-ghost" type="button" onClick={() => void customerPrices.refetch()}>Coba lagi</button>
+            </div>
+          )}
         </div>
       </Section>
 
@@ -94,27 +112,34 @@ export default function PesananBaru() {
             return (
               <div key={`${r.productId}-${i}`} className="border-t border-[var(--line)] px-4 py-4 md:px-8">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_110px_160px_auto]">
-                  <ProductPicker products={products.data ?? []} productId={r.productId} onSelect={(productId) => pickProduct(i, productId)} />
-                  <input
-                    className="input" type="number" min={1} value={r.qty}
-                    onChange={(e) => setRow(i, { qty: Math.max(1, Number(e.target.value) || 1) })}
-                    placeholder="Qty"
-                  />
-                  <input
-                    className="input" type="number" min={0} value={r.unitPrice}
-                    onChange={(e) =>
-                      setRow(i, {
-                        unitPrice: Math.max(0, Number(e.target.value) || 0),
-                        priceSource: Number(e.target.value) === p?.basePrice ? "standar" : "manual",
-                      })
-                    }
-                    placeholder="Harga satuan"
-                  />
+                  <div className="min-w-0">
+                    <label className="label-caps block" htmlFor={`order-product-${i}`}>Barang</label>
+                    <ProductPicker inputId={`order-product-${i}`} products={products.data} productId={r.productId} disabled={!customerId || customerPrices.isLoading || Boolean(customerPrices.error) || !customerPrices.data} onSelect={(productId) => pickProduct(i, productId)} />
+                  </div>
+                  <div>
+                    <label className="label-caps block" htmlFor={`order-qty-${i}`}>Jumlah</label>
+                    <input id={`order-qty-${i}`} className="input mt-1" type="number" min={1} value={r.qty}
+                      onChange={(e) => setRow(i, { qty: Math.max(1, Number(e.target.value) || 1) })}
+                      placeholder="Qty"
+                    />
+                  </div>
+                  <div>
+                    <label className="label-caps block" htmlFor={`order-price-${i}`}>Harga satuan</label>
+                    <input id={`order-price-${i}`} className="input mt-1" type="number" min={0} value={r.unitPrice}
+                      onChange={(e) =>
+                        setRow(i, {
+                          unitPrice: Math.max(0, Number(e.target.value) || 0),
+                          priceSource: Number(e.target.value) === p?.basePrice ? "standar" : "manual",
+                        })
+                      }
+                      placeholder="Harga satuan"
+                    />
+                  </div>
                   <button
                     className="btn btn-ghost md:w-[44px] md:px-0"
                     onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}
                     disabled={rows.length === 1}
-                    aria-label="Hapus baris"
+                    aria-label={`Hapus baris ${p?.name ?? i + 1}`}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -156,7 +181,7 @@ export default function PesananBaru() {
       {error && <p className="px-4 pt-4 text-sm font-medium text-[var(--bad)] md:px-8">{error}</p>}
 
       <div className="flex gap-3 px-4 py-6 md:px-8">
-        <button className="btn flex-1 md:flex-none" onClick={submit} disabled={create.isPending || update.isPending}>
+        <button className="btn flex-1 md:flex-none" onClick={submit} disabled={create.isPending || update.isPending || !customerId || customerPrices.isLoading || Boolean(customerPrices.error) || !customerPrices.data}>
           {create.isPending || update.isPending ? "Menyimpan…" : editId ? "Simpan perubahan" : "Simpan pesanan"}
         </button>
         <Link to="/pesanan" className="btn btn-ghost">Batal</Link>
@@ -165,7 +190,7 @@ export default function PesananBaru() {
   );
 }
 
-function ProductPicker({ products, productId, onSelect }: { products: Array<{ id: number; name: string; sku: string; stockQty: number; unit: string }>; productId: number; onSelect: (id: number) => void }) {
+function ProductPicker({ products, productId, inputId, disabled, onSelect }: { products: Array<{ id: number; name: string; sku: string; stockQty: number; unit: string }>; productId: number; inputId: string; disabled: boolean; onSelect: (id: number) => void }) {
   const selected = products.find((p) => p.id === productId);
   const [query, setQuery] = useState(selected?.name ?? "");
   const [open, setOpen] = useState(false);
@@ -178,7 +203,7 @@ function ProductPicker({ products, productId, onSelect }: { products: Array<{ id
   const matches = products.filter((p) => !needle || `${p.name} ${p.sku}`.toLowerCase().includes(needle)).slice(0, 8);
   return (
     <div className="relative">
-      <input className="input w-full" value={query} placeholder="Cari nama barang / SKU…" onFocus={() => setOpen(true)} onChange={(e) => { const value = e.target.value; setQuery(value); setOpen(true); const exact = products.find((p) => p.name.toLowerCase() === value.trim().toLowerCase() || p.sku.toLowerCase() === value.trim().toLowerCase()); onSelect(exact?.id ?? 0); }} />
+      <input id={inputId} aria-label="Cari nama barang atau SKU" disabled={disabled} className="input mt-1 w-full" value={query} placeholder="Cari nama barang / SKU…" onFocus={() => setOpen(true)} onChange={(e) => { const value = e.target.value; setQuery(value); setOpen(true); const exact = products.find((p) => p.name.toLowerCase() === value.trim().toLowerCase() || p.sku.toLowerCase() === value.trim().toLowerCase()); onSelect(exact?.id ?? 0); }} />
       {open && (
         <>
           <button className="fixed inset-0 z-10 h-full w-full cursor-default" aria-label="Tutup pencarian" onClick={() => setOpen(false)} />

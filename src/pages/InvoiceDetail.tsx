@@ -64,21 +64,21 @@ export default function InvoiceDetail() {
           {inv.status === "draft" && (
             <div className="border-b border-[var(--line)] px-4 py-4 md:px-8">
               <div className="mb-2 text-xs text-[var(--ink-soft)]">PPN dan diskon diisi manual per item. Nilai 0 berarti tidak ada.</div>
-              <div className="grid grid-cols-[1fr_92px_92px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
+              <div className="grid grid-cols-[minmax(0,1fr)_76px_76px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-soft)] sm:grid-cols-[minmax(0,1fr)_92px_92px]">
                 <span>Barang</span><span>Diskon %</span><span>PPN %</span>
               </div>
               <div className="space-y-2">
                 {items.map((it) => {
                   const v = adjustments[it.id] ?? { discountPercent: 0, ppnPercent: 0 };
-                  return <div key={it.id} className="grid grid-cols-[1fr_92px_92px] items-center gap-2 text-sm">
-                    <span className="truncate">{it.description}</span>
-                    <input aria-label="Diskon persen" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.discountPercent} title="Diskon %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
-                    <input aria-label="PPN persen" className="input !min-h-[40px] px-2 text-sm" type="number" min={0} max={100} value={v.ppnPercent} title="PPN %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, ppnPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
+                  return <div key={it.id} className="grid grid-cols-[minmax(0,1fr)_76px_76px] items-center gap-2 text-sm sm:grid-cols-[minmax(0,1fr)_92px_92px]">
+                    <span className="min-w-0 truncate" title={it.description}>{it.description}</span>
+                    <input aria-label={`${it.description}: diskon persen`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} max={100} value={v.discountPercent} title="Diskon %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
+                    <input aria-label={`${it.description}: PPN persen`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} max={100} value={v.ppnPercent} title="PPN %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, ppnPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
                   </div>;
                 })}
               </div>
               <div className="mt-3 flex justify-end">
-                <button className="btn btn-accent !min-h-[40px] px-3 text-xs" disabled={updateDraft.isPending} onClick={() => updateDraft.mutate({ id: inv.id, items: Object.entries(adjustments).map(([id, v]) => ({ id: Number(id), ...v })) })}>
+                <button className="btn btn-accent !min-h-[44px] px-3 text-xs" disabled={updateDraft.isPending} onClick={() => updateDraft.mutate({ id: inv.id, items: Object.entries(adjustments).map(([id, v]) => ({ id: Number(id), ...v })) })}>
                   <Save size={14} /> {updateDraft.isPending ? "Menyimpan…" : "Simpan PPN & diskon"}
                 </button>
               </div>
@@ -95,7 +95,7 @@ export default function InvoiceDetail() {
           ))}
           {inv.status !== "draft" && remaining > 0 && (
             <div className="px-4 py-3 md:px-8">
-              <Link to={`/pembayaran?invoice=${inv.id}`} className="btn btn-ghost !min-h-[40px] px-3 text-xs">Catat pembayaran</Link>
+              <Link to={`/pembayaran?invoice=${inv.id}`} className="btn btn-ghost !min-h-[44px] px-3 text-xs">Catat pembayaran</Link>
             </div>
           )}
         </div>

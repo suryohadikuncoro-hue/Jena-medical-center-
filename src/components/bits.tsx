@@ -44,7 +44,7 @@ export function StatusBadge({ status }: { status: string }) {
 
 export function Loading() {
   return (
-    <div className="px-4 py-16 text-center text-sm text-[var(--ink-soft)] md:px-8">Memuat data…</div>
+    <div className="px-4 py-16 text-center text-sm text-[var(--ink-soft)] md:px-8" role="status" aria-live="polite">Memuat data…</div>
   );
 }
 
@@ -53,7 +53,7 @@ export function LoadError({ message, retry }: { message?: string; retry?: () => 
     <div className="px-4 py-16 text-center md:px-8">
       <p className="text-sm text-[var(--bad)]">{message ?? "Gagal memuat data."}</p>
       {retry && (
-        <button className="btn btn-ghost mt-4" onClick={retry}>
+        <button className="btn btn-ghost mt-4" type="button" onClick={retry}>
           Coba lagi
         </button>
       )}

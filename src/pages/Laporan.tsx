@@ -16,7 +16,7 @@ export default function Laporan() {
       <PageHeader
         title="Laporan"
         sub={`Periode ${namaBulan(month)} (terbuka) · angka dari jurnal yang sudah dibukukan`}
-        action={<input className="input w-auto" type="month" value={month} onChange={(e) => setMonth(e.target.value)} />}
+        action={<label className="label-caps flex flex-col gap-1" htmlFor="report-month">Periode laporan<input id="report-month" className="input w-auto" type="month" value={month} onChange={(e) => setMonth(e.target.value)} /></label>}
       />
 
       <div className="flex gap-2 overflow-x-auto px-4 pb-4 md:px-8">
@@ -206,28 +206,29 @@ function Jurnal({ month }: { month: string }) {
 function BukuBesar({ month }: { month: string }) {
   const accounts = trpc.reports.accountList.useQuery();
   const [code, setCode] = useState("1101");
-  const q = trpc.reports.bukuBesar.useQuery({ month, code });
+  const selectedCode = accounts.data?.some((account) => account.code === code) ? code : accounts.data?.[0]?.code ?? "";
+  const q = trpc.reports.bukuBesar.useQuery({ month, code: selectedCode }, { enabled: Boolean(selectedCode) });
+  if (accounts.isLoading) return <Loading />;
+  if (accounts.error || !accounts.data) return <LoadError message={accounts.error?.message} retry={() => accounts.refetch()} />;
+  if (accounts.data.length === 0) return <Empty text="Belum ada akun buku besar yang tersedia." />;
+  if (q.isLoading) return <Loading />;
+  if (q.error || !q.data) return <LoadError message={q.error?.message} retry={() => q.refetch()} />;
   return (
     <Section title={`Buku Besar · ${namaBulan(month)}`}>
       <div className="border-b border-[var(--line)]">
         <div className="px-4 py-3 md:px-8">
-          <select className="select" value={code} onChange={(e) => setCode(e.target.value)}>
-            {(accounts.data ?? []).map((a) => (
+          <label className="label-caps" htmlFor="ledger-account">Akun buku besar</label>
+          <select id="ledger-account" className="select mt-1" value={selectedCode} onChange={(e) => setCode(e.target.value)}>
+            {accounts.data.map((a) => (
               <option key={a.code} value={a.code}>{a.code} · {a.name}</option>
             ))}
           </select>
         </div>
-        {q.isLoading ? (
-          <Loading />
-        ) : q.data ? (
-          <>
-            <KV k="Saldo awal" v={rp(q.data.opening)} />
-            {q.data.rows.map((r, i) => (
-              <KV key={i} k={`${tanggal(r.date)} · ${r.memo}`} v={`${r.debit > 0 ? `D ${rp(r.debit)}` : `K ${rp(r.credit)}`} → ${rp(r.balance)}`} />
-            ))}
-            <KV k="Saldo akhir" v={rp(q.data.closing)} strong />
-          </>
-        ) : null}
+        <KV k="Saldo awal" v={rp(q.data.opening)} />
+        {q.data.rows.length ? q.data.rows.map((r, i) => (
+          <KV key={i} k={`${tanggal(r.date)} · ${r.memo}`} v={`${r.debit > 0 ? `D ${rp(r.debit)}` : `K ${rp(r.credit)}`} → ${rp(r.balance)}`} />
+        )) : <Empty text="Belum ada transaksi untuk akun dan periode ini." />}
+        <KV k="Saldo akhir" v={rp(q.data.closing)} strong />
       </div>
     </Section>
   );
