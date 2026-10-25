@@ -180,6 +180,28 @@ export const ordersRouter = createRouter({
       return { id: row.id, number };
     }),
 
+  updateDraft: protectedProcedure.input(z.object({
+    id: z.number(), customerId: z.number(), orderDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), note: z.string().optional(),
+    items: z.array(z.object({ productId: z.number(), qty: z.number().int().min(1), unitPrice: z.number().int().min(0), priceSource: z.enum(["standar", "khusus", "manual"]) })).min(1),
+  })).mutation(async ({ input }) => {
+    const db = getDb();
+    const [order] = await db.select({ status: salesOrders.status }).from(salesOrders).where(eq(salesOrders.id, input.id)).limit(1);
+    if (!order || order.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Hanya pesanan draft yang bisa diedit." });
+    await db.update(salesOrders).set({ customerId: input.customerId, orderDate: input.orderDate, note: input.note }).where(eq(salesOrders.id, input.id));
+    await db.delete(salesOrderItems).where(eq(salesOrderItems.orderId, input.id));
+    for (const item of input.items) await db.insert(salesOrderItems).values({ orderId: input.id, ...item });
+    return { ok: true };
+  }),
+
+  deleteDraft: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    const db = getDb();
+    const [order] = await db.select({ status: salesOrders.status }).from(salesOrders).where(eq(salesOrders.id, input.id)).limit(1);
+    if (!order || order.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Hanya pesanan draft yang bisa dihapus." });
+    await db.delete(salesOrderItems).where(eq(salesOrderItems.orderId, input.id));
+    await db.delete(salesOrders).where(eq(salesOrders.id, input.id));
+    return { ok: true };
+  }),
+
   // Buat order ke supplier untuk (sebagian) baris pesanan
   orderToSupplier: protectedProcedure
     .input(
@@ -215,6 +237,17 @@ export const ordersRouter = createRouter({
       }
       return { id: row.id, number };
     }),
+
+  deleteSentPurchaseOrder: protectedProcedure.input(z.object({ poId: z.number() })).mutation(async ({ input }) => {
+    const db = getDb();
+    const [po] = await db.select({ status: purchaseOrders.status, salesOrderId: purchaseOrders.salesOrderId }).from(purchaseOrders).where(eq(purchaseOrders.id, input.poId)).limit(1);
+    if (!po || po.status !== "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Hanya PO yang belum dikonfirmasi yang bisa dihapus." });
+    await db.delete(purchaseOrderItems).where(eq(purchaseOrderItems.poId, input.poId));
+    await db.delete(purchaseOrders).where(eq(purchaseOrders.id, input.poId));
+    const remaining = await db.select({ id: purchaseOrders.id }).from(purchaseOrders).where(eq(purchaseOrders.salesOrderId, po.salesOrderId)).limit(1);
+    if (!remaining.length) await db.update(salesOrders).set({ status: "draft" }).where(eq(salesOrders.id, po.salesOrderId));
+    return { ok: true };
+  }),
 
   // Catat balasan supplier → pesanan terkonfirmasi
   confirmPurchaseOrder: protectedProcedure

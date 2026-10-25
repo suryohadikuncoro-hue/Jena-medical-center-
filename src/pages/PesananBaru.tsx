@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate, Link } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router";
 import { Plus, Trash2 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { todayLocal, rp } from "@/lib/format";
@@ -11,19 +11,33 @@ type Row = { productId: number; qty: number; unitPrice: number; priceSource: "st
 
 export default function PesananBaru() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const editId = Number(params.get("edit")) || 0;
   const [customerId, setCustomerId] = useState<number | "">("");
   const [orderDate, setOrderDate] = useState(todayLocal());
   const [note, setNote] = useState("");
   const [rows, setRows] = useState<Row[]>([{ productId: 0, qty: 1, unitPrice: 0, priceSource: "standar" }]);
   const [error, setError] = useState<string | null>(null);
+  const [initializedEdit, setInitializedEdit] = useState(0);
 
   const customers = trpc.master.customers.useQuery();
   const products = trpc.master.products.useQuery();
+  const existing = trpc.orders.detail.useQuery({ id: editId }, { enabled: Boolean(editId) });
   const customerPrices = trpc.master.customerPrices.useQuery(
     { customerId: Number(customerId) },
     { enabled: Boolean(customerId) },
   );
   const create = trpc.orders.create.useMutation();
+  const update = trpc.orders.updateDraft.useMutation();
+
+  useEffect(() => {
+    if (!editId || initializedEdit === editId || !existing.data) return;
+    setCustomerId(existing.data.order.customerId);
+    setOrderDate(existing.data.order.orderDate);
+    setNote(existing.data.order.note ?? "");
+    setRows(existing.data.items.map((item) => ({ productId: item.productId, qty: item.qty, unitPrice: item.unitPrice, priceSource: item.priceSource })));
+    setInitializedEdit(editId);
+  }, [editId, existing.data, initializedEdit]);
 
   const prodMap = useMemo(() => new Map((products.data ?? []).map((p) => [p.id, p])), [products.data]);
   const priceMap = useMemo(() => new Map((customerPrices.data ?? []).map((p) => [p.productId, p])), [customerPrices.data]);
@@ -43,17 +57,16 @@ export default function PesananBaru() {
     if (!customerId) return setError("Pilih pelanggan dulu.");
     const items = rows.filter((r) => r.productId && r.qty > 0);
     if (items.length === 0) return setError("Tambahkan minimal satu barang.");
-    create.mutate(
-      { customerId, orderDate, note: note || undefined, items },
-      { onSuccess: (r) => navigate(`/pesanan/${r.id}`), onError: (e) => setError(e.message) },
-    );
+    const payload = { customerId, orderDate, note: note || undefined, items };
+    if (editId) update.mutate({ id: editId, ...payload }, { onSuccess: () => navigate(`/pesanan/${editId}`), onError: (e) => setError(e.message) });
+    else create.mutate(payload, { onSuccess: (r) => navigate(`/pesanan/${r.id}`), onError: (e) => setError(e.message) });
   };
 
-  if (customers.isLoading || products.isLoading) return <Loading />;
+  if (customers.isLoading || products.isLoading || (editId && existing.isLoading)) return <Loading />;
 
   return (
     <div>
-      <PageHeader title="Pesanan baru" sub="Buat pesanan pelanggan — invoice dibuat nanti dari pesanan ini" />
+      <PageHeader title={editId ? "Edit pesanan" : "Pesanan baru"} sub="Buat atau sesuaikan pesanan pelanggan sebelum diproses" />
 
       <Section title="Pelanggan">
         <div className="grid grid-cols-1 gap-3 px-4 pb-4 md:grid-cols-2 md:px-8">
@@ -148,8 +161,8 @@ export default function PesananBaru() {
       {error && <p className="px-4 pt-4 text-sm font-medium text-[var(--bad)] md:px-8">{error}</p>}
 
       <div className="flex gap-3 px-4 py-6 md:px-8">
-        <button className="btn flex-1 md:flex-none" onClick={submit} disabled={create.isPending}>
-          {create.isPending ? "Menyimpan…" : "Simpan pesanan"}
+        <button className="btn flex-1 md:flex-none" onClick={submit} disabled={create.isPending || update.isPending}>
+          {create.isPending || update.isPending ? "Menyimpan…" : editId ? "Simpan perubahan" : "Simpan pesanan"}
         </button>
         <Link to="/pesanan" className="btn btn-ghost">Batal</Link>
       </div>

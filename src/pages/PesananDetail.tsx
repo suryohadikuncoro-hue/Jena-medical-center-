@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
-import { X, AlertTriangle, Check, MessageCircle } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router";
+import { X, AlertTriangle, Check, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { rp, tanggal, todayLocal, waNumber } from "@/lib/format";
 import { PageHeader, Section, StatusBadge, Loading, LoadError } from "@/components/bits";
@@ -34,12 +34,15 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 
 export default function PesananDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const orderId = Number(id);
   const utils = trpc.useUtils();
   const q = trpc.orders.detail.useQuery({ id: orderId }, { refetchOnMount: "always" });
   const suppliers = trpc.master.suppliers.useQuery();
 
   const confirmPO = trpc.orders.confirmPurchaseOrder.useMutation({ onSuccess: () => q.refetch() });
+  const deleteOrder = trpc.orders.deleteDraft.useMutation({ onSuccess: () => navigate("/pesanan") });
+  const deletePO = trpc.orders.deleteSentPurchaseOrder.useMutation({ onSuccess: () => { q.refetch(); utils.orders.list.invalidate(); } });
   const orderToSupplier = trpc.orders.orderToSupplier.useMutation({
     onSuccess: () => { setPoModal(false); void q.refetch(); utils.orders.list.invalidate(); },
   });
@@ -102,7 +105,7 @@ export default function PesananDetail() {
       <PageHeader
         title={order.number}
         sub={`${order.customerName} · ${tanggal(order.orderDate)}`}
-        action={<StatusBadge status={order.status} />}
+        action={<div className="flex flex-wrap items-center gap-2"><StatusBadge status={order.status} />{order.status === "draft" && <><Link className="btn btn-ghost !min-h-[36px] px-3 text-xs" to={`/pesanan/baru?edit=${order.id}`}><Pencil size={14} /> Edit</Link><button className="btn btn-ghost !min-h-[36px] px-3 text-xs text-[var(--bad)]" disabled={deleteOrder.isPending} onClick={() => { if (confirm("Hapus pesanan draft ini?")) deleteOrder.mutate({ id: order.id }); }}><Trash2 size={14} /> Hapus</button></>}</div>}
       />
 
       {/* Barang */}
@@ -164,6 +167,9 @@ export default function PesananDetail() {
                       )}
                       <button className="btn btn-ghost !min-h-[36px] px-3 text-xs" onClick={() => confirmPO.mutate({ poId: p.id })} disabled={confirmPO.isPending}>
                         Catat balasan
+                      </button>
+                      <button className="btn btn-ghost !min-h-[36px] px-3 text-xs text-[var(--bad)]" disabled={deletePO.isPending} onClick={() => { if (confirm("Hapus PO yang belum dikonfirmasi ini?")) deletePO.mutate({ poId: p.id }); }}>
+                        <Trash2 size={14} /> Hapus PO
                       </button>
                     </div>
                   )}
