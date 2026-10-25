@@ -5,7 +5,7 @@ import { trpc } from "@/providers/trpc";
 import { todayLocal, rp } from "@/lib/format";
 import { PageHeader, Section, Loading, LoadError } from "@/components/bits";
 
-type Row = { productId: number; qty: number; unitPrice: number; priceSource: "standar" | "khusus" | "manual" };
+type Row = { productId: number; qty: number | ""; unitPrice: number | ""; priceSource: "standar" | "khusus" | "manual" };
 
 
 
@@ -43,7 +43,7 @@ export default function PesananBaru() {
 
   const prodMap = useMemo(() => new Map((products.data ?? []).map((p) => [p.id, p])), [products.data]);
   const priceMap = useMemo(() => new Map((customerPrices.data ?? []).map((p) => [p.productId, p])), [customerPrices.data]);
-  const total = rows.reduce((s, r) => s + r.qty * r.unitPrice, 0);
+  const total = rows.reduce((s, r) => s + (typeof r.qty === "number" ? r.qty : 0) * (typeof r.unitPrice === "number" ? r.unitPrice : 0), 0);
 
   const setRow = (i: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
@@ -58,7 +58,15 @@ export default function PesananBaru() {
   const submit = () => {
     setError(null);
     if (!customerId) return setError("Pilih pelanggan dulu.");
-    const items = rows.filter((r) => r.productId && r.qty > 0);
+    const items: Array<{ productId: number; qty: number; unitPrice: number; priceSource: Row["priceSource"] }> = [];
+    for (const row of rows) {
+      if (!row.productId) continue;
+      const qty = row.qty;
+      const unitPrice = row.unitPrice;
+      if (qty === "" || !Number.isInteger(qty) || qty < 1) return setError("Jumlah barang harus bilangan bulat minimal 1.");
+      if (unitPrice === "" || !Number.isInteger(unitPrice) || unitPrice < 0) return setError("Harga satuan harus diisi dengan angka 0 atau lebih.");
+      items.push({ productId: row.productId, qty, unitPrice, priceSource: row.priceSource });
+    }
     if (items.length === 0) return setError("Tambahkan minimal satu barang.");
     const payload = { customerId, orderDate, note: note || undefined, items };
     if (editId) update.mutate({ id: editId, ...payload }, { onSuccess: () => navigate(`/pesanan/${editId}`), onError: (e) => setError(e.message) });
@@ -107,8 +115,10 @@ export default function PesananBaru() {
         <div className="border-b border-[var(--line)]">
           {rows.map((r, i) => {
             const p = r.productId ? prodMap.get(r.productId) : undefined;
-            const belowCost = p ? r.unitPrice < p.lastCost : false;
-            const margin = p && r.unitPrice > 0 ? Math.round(((r.unitPrice - p.lastCost) / r.unitPrice) * 100) : 0;
+            const qty = typeof r.qty === "number" ? r.qty : 0;
+            const unitPrice = typeof r.unitPrice === "number" ? r.unitPrice : 0;
+            const belowCost = p && r.unitPrice !== "" ? unitPrice < p.lastCost : false;
+            const margin = p && unitPrice > 0 ? Math.round(((unitPrice - p.lastCost) / unitPrice) * 100) : 0;
             return (
               <div key={`${r.productId}-${i}`} className="border-t border-[var(--line)] px-4 py-4 md:px-8">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_110px_160px_auto]">
@@ -119,19 +129,16 @@ export default function PesananBaru() {
                   <div>
                     <label className="label-caps block" htmlFor={`order-qty-${i}`}>Jumlah</label>
                     <input id={`order-qty-${i}`} className="input mt-1" type="number" min={1} value={r.qty}
-                      onChange={(e) => setRow(i, { qty: Math.max(1, Number(e.target.value) || 1) })}
+                      step={1}
+                      onChange={(e) => { const value = e.target.value; setRow(i, { qty: value === "" ? "" : Number(value) }); }}
                       placeholder="Qty"
                     />
                   </div>
                   <div>
                     <label className="label-caps block" htmlFor={`order-price-${i}`}>Harga satuan</label>
                     <input id={`order-price-${i}`} className="input mt-1" type="number" min={0} value={r.unitPrice}
-                      onChange={(e) =>
-                        setRow(i, {
-                          unitPrice: Math.max(0, Number(e.target.value) || 0),
-                          priceSource: Number(e.target.value) === p?.basePrice ? "standar" : "manual",
-                        })
-                      }
+                      step={1}
+                      onChange={(e) => { const value = e.target.value; setRow(i, { unitPrice: value === "" ? "" : Number(value), priceSource: value === "" ? r.priceSource : Number(value) === p?.basePrice ? "standar" : "manual" }); }}
                       placeholder="Harga satuan"
                     />
                   </div>
@@ -147,7 +154,7 @@ export default function PesananBaru() {
                 {p && (
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                     <span className="text-[var(--ink-soft)]">
-                      {r.qty} {p.unit} × {rp(r.unitPrice)} = <b className="text-[var(--ink)]">{rp(r.qty * r.unitPrice)}</b>
+                      {r.qty === "" ? "—" : r.qty} {p.unit} × {r.unitPrice === "" ? "—" : rp(r.unitPrice)} = <b className="text-[var(--ink)]">{rp(qty * unitPrice)}</b>
                     </span>
                     <span className={belowCost ? "font-semibold text-[var(--bad)]" : "text-[var(--ink-soft)]"}>
                       {r.priceSource === "standar" ? "Harga standar" : r.priceSource === "khusus" ? "Harga khusus" : "Diubah manual"} · Margin {margin > 0 ? "+" : ""}{margin}%
