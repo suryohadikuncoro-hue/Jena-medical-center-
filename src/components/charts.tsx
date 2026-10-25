@@ -1,30 +1,40 @@
 import { rpShort } from "@/lib/format";
 
+function PlotGrid({ height }: { height: number }) {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 flex flex-col justify-between" style={{ height }}>
+      {Array.from({ length: 4 }, (_, i) => <span key={i} className="border-t border-dashed border-[#edf0f5]" />)}
+    </div>
+  );
+}
+
 /** Grafik batang ganda (pesanan vs ditagih) per hari — SVG murni */
 export function DualBars({ data, height = 160 }: { data: { label: string; pesanan: number; ditagih: number }[]; height?: number }) {
   const max = Math.max(1, ...data.flatMap((d) => [d.pesanan, d.ditagih]));
+  const plotHeight = height - 30;
   return (
-    <div className="px-4 pb-4 md:px-8">
-      <div className="flex items-center gap-4 pb-3 text-xs text-[var(--ink-soft)]">
-        <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5 bg-[var(--ink)]" /> Nilai pesanan</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5 bg-[var(--slate)]" /> Ditagih</span>
+    <div className="pb-1">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pb-4 text-xs text-[#747d90]" aria-hidden="true">
+        <span className="flex items-center gap-2"><i className="inline-block size-2.5 rounded-full bg-[#6876c8]" /> Nilai pesanan</span>
+        <span className="flex items-center gap-2"><i className="inline-block size-2.5 rounded-full bg-[#79b7a8]" /> Ditagih</span>
       </div>
-      <div className="flex items-end gap-[6px]" style={{ height }}>
+      <div className="relative flex items-end gap-2" style={{ height }} role="img" aria-label="Grafik nilai pesanan dan penagihan harian selama tujuh hari terakhir">
+        <PlotGrid height={plotHeight} />
         {data.map((d, i) => (
-          <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-            <div className="flex w-full items-end justify-center gap-[3px]" style={{ height: height - 28 }}>
+          <div key={`${d.label}-${i}`} className="relative z-10 flex min-w-0 flex-1 flex-col items-center gap-2">
+            <div className="flex w-full items-end justify-center gap-1" style={{ height: plotHeight }}>
               <div
-                className="w-1/2 max-w-[22px] bg-[var(--ink)] transition-all duration-300"
+                className="w-2/5 max-w-[24px] rounded-t-md bg-[#6876c8] transition-all duration-300"
                 style={{ height: `${(d.pesanan / max) * 100}%`, minHeight: d.pesanan > 0 ? 3 : 0 }}
                 title={`Pesanan ${rpShort(d.pesanan)}`}
               />
               <div
-                className="w-1/2 max-w-[22px] bg-[var(--slate)] transition-all duration-300"
+                className="w-2/5 max-w-[24px] rounded-t-md bg-[#79b7a8] transition-all duration-300"
                 style={{ height: `${(d.ditagih / max) * 100}%`, minHeight: d.ditagih > 0 ? 3 : 0 }}
                 title={`Ditagih ${rpShort(d.ditagih)}`}
               />
             </div>
-            <span className="w-full truncate text-center text-[0.625rem] text-[var(--ink-soft)]">{d.label}</span>
+            <span className="w-full truncate text-center text-[0.625rem] font-medium text-[#828a9b]">{d.label}</span>
           </div>
         ))}
       </div>
@@ -35,21 +45,23 @@ export function DualBars({ data, height = 160 }: { data: { label: string; pesana
 /** Grafik batang ganda 6 bulan: pendapatan vs HPP */
 export function TrendBars({ data, height = 180 }: { data: { label: string; pendapatan: number; hpp: number }[]; height?: number }) {
   const max = Math.max(1, ...data.flatMap((d) => [d.pendapatan, d.hpp]));
+  const plotHeight = height - 42;
   return (
-    <div className="px-4 pb-4 md:px-8">
-      <div className="flex items-center gap-4 pb-3 text-xs text-[var(--ink-soft)]">
-        <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5 bg-[var(--ink)]" /> Pendapatan</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5 bg-[var(--slate)]" /> HPP</span>
+    <div className="pb-1">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pb-4 text-xs text-[#747d90]" aria-hidden="true">
+        <span className="flex items-center gap-2"><i className="inline-block size-2.5 rounded-full bg-[#6876c8]" /> Pendapatan</span>
+        <span className="flex items-center gap-2"><i className="inline-block size-2.5 rounded-full bg-[#79b7a8]" /> HPP</span>
       </div>
-      <div className="flex items-end gap-2" style={{ height }}>
+      <div className="relative flex items-end gap-2 sm:gap-3" style={{ height }} role="img" aria-label="Grafik tren pendapatan dibanding harga pokok selama enam bulan">
+        <PlotGrid height={plotHeight} />
         {data.map((d, i) => (
-          <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-            <span className="text-[0.625rem] font-medium text-[var(--ink-soft)]">{d.pendapatan > 0 ? rpShort(d.pendapatan).replace("Rp ", "") : ""}</span>
-            <div className="flex w-full items-end justify-center gap-[4px]" style={{ height: height - 46 }}>
-              <div className="w-2/5 max-w-[28px] bg-[var(--ink)]" style={{ height: `${(d.pendapatan / max) * 100}%`, minHeight: d.pendapatan > 0 ? 3 : 0 }} />
-              <div className="w-2/5 max-w-[28px] bg-[var(--slate)]" style={{ height: `${(d.hpp / max) * 100}%`, minHeight: d.hpp > 0 ? 3 : 0 }} />
+          <div key={`${d.label}-${i}`} className="relative z-10 flex min-w-0 flex-1 flex-col items-center gap-1.5">
+            <span className="h-3 text-[0.58rem] font-medium text-[#8a92a2]">{d.pendapatan > 0 ? rpShort(d.pendapatan).replace("Rp ", "") : ""}</span>
+            <div className="flex w-full items-end justify-center gap-1" style={{ height: plotHeight }}>
+              <div className="w-2/5 max-w-[26px] rounded-t-md bg-[#6876c8] transition-all duration-300" style={{ height: `${(d.pendapatan / max) * 100}%`, minHeight: d.pendapatan > 0 ? 3 : 0 }} title={`Pendapatan ${rpShort(d.pendapatan)}`} />
+              <div className="w-2/5 max-w-[26px] rounded-t-md bg-[#79b7a8] transition-all duration-300" style={{ height: `${(d.hpp / max) * 100}%`, minHeight: d.hpp > 0 ? 3 : 0 }} title={`HPP ${rpShort(d.hpp)}`} />
             </div>
-            <span className="text-[0.625rem] text-[var(--ink-soft)]">{d.label}</span>
+            <span className="text-[0.625rem] font-medium text-[#828a9b]">{d.label}</span>
           </div>
         ))}
       </div>
