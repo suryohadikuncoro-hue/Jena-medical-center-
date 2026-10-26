@@ -156,8 +156,8 @@ export default function Beranda() {
   ];
 
   return (
-    <div className="min-h-full bg-[#f4f6fa] px-4 py-5 sm:px-6 md:px-8 md:py-8">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="min-h-full w-full min-w-0 max-w-full overflow-x-clip bg-[#f4f6fa] px-4 py-5 sm:px-6 md:px-8 md:py-8">
+      <div className="mx-auto w-full min-w-0 max-w-6xl space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#5966b5]">
