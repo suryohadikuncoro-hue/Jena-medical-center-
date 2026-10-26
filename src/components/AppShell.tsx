@@ -122,10 +122,11 @@ export default function AppShell() {
                 to={n.to}
                 end={n.end}
                 onClick={() => setMenuOpen(false)}
-                className={({ isActive }) => `flex min-h-[64px] items-center gap-3 border-b border-r border-[var(--line)] px-5 text-sm font-semibold ${isActive ? "bg-[var(--ink)] text-[var(--paper)]" : "hover:bg-[var(--paper-2)]"}`}
+                aria-label={n.label}
+                className={({ isActive }) => `flex min-h-[64px] min-w-0 items-center gap-2 border-b border-r border-[var(--line)] px-3 text-[0.8125rem] font-semibold sm:gap-3 sm:px-5 sm:text-sm ${isActive ? "bg-[var(--ink)] text-[var(--paper)]" : "hover:bg-[var(--paper-2)]"}`}
               >
-                <n.icon size={18} strokeWidth={1.75} />
-                {n.label}
+                <n.icon className="shrink-0" size={18} strokeWidth={1.75} />
+                <span className="min-w-0 truncate">{n.label}</span>
               </NavLink>
             ))}
           </nav>
