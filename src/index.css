@@ -43,15 +43,28 @@
   }
 
   html {
+    width: 100%;
+    min-width: 0;
+    min-height: 100%;
     -webkit-tap-highlight-color: transparent;
   }
 
   body {
+    width: 100%;
+    min-width: 0;
+    min-height: 100dvh;
+    margin: 0;
     background: var(--paper);
     color: var(--ink);
     font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
     font-feature-settings: 'tnum' 1, 'cv05' 1;
     line-height: 1.5;
+  }
+
+  #root {
+    width: 100%;
+    min-width: 0;
+    min-height: 100dvh;
   }
 
   .font-display {
