@@ -17,7 +17,7 @@ export default function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-      <div className="min-h-[100dvh] bg-[var(--paper)] text-[var(--ink)]">
+      <div className="min-h-[100dvh] w-full min-w-0 max-w-full overflow-x-clip bg-[var(--paper)] text-[var(--ink)]">
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-[#30394d] bg-[#1d2638] text-white md:flex">
         <div className="border-b border-[#30394d] px-5 py-5">
@@ -45,7 +45,7 @@ export default function AppShell() {
       </aside>
 
       {/* Mobile header */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--line-strong)] bg-[var(--paper)]/95 px-4 py-3 backdrop-blur-sm md:hidden">
+      <header className="sticky top-0 z-30 flex w-full min-w-0 items-center justify-between border-b border-[var(--line-strong)] bg-[var(--paper)]/95 px-4 py-3 backdrop-blur-sm md:hidden">
         <div>
           <div className="font-display text-base font-semibold leading-tight">Jena</div>
           <div className="label-caps">Business Suite</div>
@@ -53,8 +53,8 @@ export default function AppShell() {
         <div className="text-xs text-[var(--ink-soft)]">Jena Medical Center</div>
       </header>
 
-      <main className="pb-24 md:pb-10 md:pl-56">
-        <div className="mx-auto w-full max-w-6xl">
+      <main className="w-full min-w-0 pb-24 md:pb-10 md:pl-56">
+        <div className="mx-auto w-full min-w-0 max-w-6xl">
           <Outlet />
         </div>
       </main>
