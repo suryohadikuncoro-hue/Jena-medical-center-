@@ -61,14 +61,14 @@ export default function AppShell() {
 
       {/* Mobile bottom tabs */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-[#30394d] bg-[#1d2638] text-white md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 grid w-full min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] border-t border-[#30394d] bg-[#1d2638] text-white md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <NavLink
           to="/"
           end
           className={({ isActive }) =>
-            `flex min-h-[56px] flex-col items-center justify-center gap-1 text-xs font-semibold uppercase tracking-wide transition-colors duration-200 ${
+            `flex min-w-0 min-h-[56px] flex-col items-center justify-center gap-1 overflow-hidden text-xs font-semibold uppercase tracking-wide transition-colors duration-200 ${
               isActive ? "bg-white/10 text-[#b8e6da]" : "text-white/65 hover:bg-white/5 hover:text-white"
             }`
           }
@@ -92,7 +92,7 @@ export default function AppShell() {
           onClick={() => setMenuOpen(true)}
           aria-haspopup="dialog"
           aria-expanded={menuOpen}
-          className="flex min-h-[56px] flex-col items-center justify-center gap-1 text-xs font-semibold uppercase tracking-wide text-white/65 transition-colors duration-200 hover:bg-white/5 hover:text-white"
+          className="flex min-w-0 min-h-[56px] flex-col items-center justify-center gap-1 overflow-hidden text-xs font-semibold uppercase tracking-wide text-white/65 transition-colors duration-200 hover:bg-white/5 hover:text-white"
         >
           <MenuIcon size={18} strokeWidth={1.75} />
           Menu
