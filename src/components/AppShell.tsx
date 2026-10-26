@@ -17,7 +17,7 @@ export default function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-      <div className="min-h-[100dvh] w-full min-w-0 max-w-full overflow-x-clip bg-[var(--paper)] text-[var(--ink)]">
+      <div className="min-h-[100dvh] w-screen min-w-0 max-w-none overflow-x-clip bg-[var(--paper)] text-[var(--ink)]" style={{ width: "100vw", maxWidth: "100vw" }}>
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-[#30394d] bg-[#1d2638] text-white md:flex">
         <div className="border-b border-[#30394d] px-5 py-5">
