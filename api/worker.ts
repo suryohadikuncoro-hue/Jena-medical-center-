@@ -28,7 +28,19 @@ app.use("/api/*", async (c, next) => {
 app.use(
   "/api/*",
   cors({
-    origin: (origin, c) => origin === c.env.FRONTEND_ORIGIN ? origin : c.env.FRONTEND_ORIGIN,
+    origin: (origin, c) => {
+      if (!origin) return c.env.FRONTEND_ORIGIN;
+      if (origin === c.env.FRONTEND_ORIGIN) return origin;
+      try {
+        const url = new URL(origin);
+        const isOfficialPagesPreview =
+          url.protocol === "https:" &&
+          url.hostname.endsWith(".jena-medical-center.pages.dev");
+        return isOfficialPagesPreview ? origin : null;
+      } catch {
+        return null;
+      }
+    },
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
