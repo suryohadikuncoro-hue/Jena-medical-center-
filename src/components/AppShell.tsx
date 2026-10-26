@@ -103,8 +103,8 @@ export default function AppShell() {
         <DialogContent
           showCloseButton={false}
           overlayClassName="md:hidden"
-          className="inset-x-4 bottom-20 left-4 top-auto grid h-fit max-h-[75dvh] w-auto max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none border-[var(--line-strong)] bg-[var(--paper)] p-0 shadow-2xl sm:max-w-none md:hidden"
-          style={{ marginBottom: "env(safe-area-inset-bottom)" }}
+          className="bottom-0 left-0 right-0 top-auto z-50 grid h-auto max-h-[80dvh] w-full max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-t-xl rounded-b-none border-x-0 border-b-0 border-t border-[var(--line-strong)] bg-[var(--paper)] p-0 shadow-2xl sm:max-w-none md:hidden"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           <DialogHeader className="flex-row items-center justify-between border-b border-[var(--line-strong)] px-5 py-4 text-left">
             <div>
