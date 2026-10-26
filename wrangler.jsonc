@@ -14,5 +14,17 @@
       "binding": "HYPERDRIVE",
       "id": "77628fa285584248ac62a996afb4d7d5"
     }
-  ]
+  ],
+  "previews": {
+    "vars": {
+      "SUPABASE_URL": "https://hnkslpbifxqubcpzhihg.supabase.co",
+      "FRONTEND_ORIGIN": "https://jena-medical-center.pages.dev"
+    },
+    "hyperdrive": [
+      {
+        "binding": "HYPERDRIVE",
+        "id": "77628fa285584248ac62a996afb4d7d5"
+      }
+    ]
+  }
 }
