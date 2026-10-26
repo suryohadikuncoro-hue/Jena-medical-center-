@@ -1,187 +1,347 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { ArrowRight, AlertTriangle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  ArrowUpRight,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  FileText,
+  TrendingUp,
+  Truck,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import { trpc } from "@/providers/trpc";
-import { rp, rpShort, tanggalPanjang, tanggal } from "@/lib/format";
-import { Section, Loading, LoadError } from "@/components/bits";
+import { rp, rpShort, tanggal, tanggalPanjang } from "@/lib/format";
+import { LoadError } from "@/components/bits";
 import { DualBars, TrendBars } from "@/components/charts";
+
+type Tone = "violet" | "mint" | "rose";
+
+type StatCardProps = {
+  label: string;
+  value: number;
+  detail: string;
+  badge: string;
+  href: string;
+  icon: LucideIcon;
+  tone: Tone;
+};
+
+const toneStyles: Record<Tone, { icon: string; badge: string }> = {
+  violet: { icon: "bg-[#eef0ff] text-[#5966b5]", badge: "bg-[#f1f2ff] text-[#5963a9]" },
+  mint: { icon: "bg-[#e8f6f2] text-[#2f7568]", badge: "bg-[#eff8f5] text-[#2f7568]" },
+  rose: { icon: "bg-[#fff0f3] text-[#a14c66]", badge: "bg-[#fff3f5] text-[#a14c66]" },
+};
+
+function Surface({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <section className={`rounded-2xl border border-[#e6e9f0] bg-white shadow-[0_12px_30px_-26px_rgba(24,35,56,0.45)] ${className}`}>
+      {children}
+    </section>
+  );
+}
+
+function StatCard({ label, value, detail, badge, href, icon: Icon, tone }: StatCardProps) {
+  const style = toneStyles[tone];
+  return (
+    <Link
+      to={href}
+      aria-label={`${label}: ${value}. ${detail}`}
+      className="group min-w-0 rounded-2xl border border-[#e6e9f0] bg-white p-4 shadow-[0_12px_30px_-26px_rgba(24,35,56,0.45)] transition duration-200 hover:-translate-y-0.5 hover:border-[#d5dae5] hover:shadow-[0_18px_35px_-25px_rgba(24,35,56,0.35)] focus-visible:outline-offset-4 sm:p-5"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${style.icon}`}>
+          <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
+        </span>
+        <ArrowUpRight size={17} className="text-[#98a0b2] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#5663ad]" aria-hidden="true" />
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span className="font-display text-3xl font-semibold tracking-tight text-[#222a3b]">{value}</span>
+        <span className={`rounded-full px-2.5 py-1 text-[0.65rem] font-semibold ${style.badge}`}>{badge}</span>
+      </div>
+      <h2 className="mt-1 text-sm font-semibold text-[#2b3344]">{label}</h2>
+      <p className="mt-1 text-xs leading-relaxed text-[#667085]">{detail}</p>
+    </Link>
+  );
+}
+
+function FinanceMetric({ label, value, detail, icon: Icon, tone }: { label: string; value: number; detail: string; icon: LucideIcon; tone: Tone }) {
+  const style = toneStyles[tone];
+  return (
+    <div className="min-w-0 rounded-xl bg-[#f7f8fb] p-4 sm:p-5" title={rp(value)}>
+      <div className="flex items-center gap-2.5">
+        <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${style.icon}`}>
+          <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
+        </span>
+        <span className="text-xs font-medium text-[#687184]">{label}</span>
+      </div>
+      <div className="mt-3 truncate font-display text-xl font-semibold tracking-tight text-[#252d3f] sm:text-2xl">{rpShort(value)}</div>
+      <p className="mt-1 text-[0.7rem] leading-relaxed text-[#667085]">{detail}</p>
+    </div>
+  );
+}
+
+function DashboardLoading() {
+  return (
+    <div className="min-h-[70vh] bg-[#f4f6fa] px-4 py-6 sm:px-6 md:px-8" role="status" aria-label="Memuat dashboard">
+      <div className="mx-auto max-w-6xl animate-pulse space-y-5">
+        <div className="h-20 rounded-2xl bg-white" />
+        <div className="grid gap-4 sm:grid-cols-3"><div className="h-36 rounded-2xl bg-white" /><div className="h-36 rounded-2xl bg-white" /><div className="h-36 rounded-2xl bg-white" /></div>
+        <div className="grid gap-5 xl:grid-cols-[1.6fr_1fr]"><div className="h-72 rounded-2xl bg-white" /><div className="h-72 rounded-2xl bg-white" /></div>
+      </div>
+      <span className="sr-only">Memuat data dashboard…</span>
+    </div>
+  );
+}
 
 export default function Beranda() {
   const q = trpc.reports.dashboard.useQuery(undefined, { refetchOnMount: "always" });
 
-  if (q.isLoading) return <Loading />;
-  if (q.error || !q.data) return <LoadError message={q.error?.message} retry={() => q.refetch()} />;
-  const d = q.data;
-
-  return (
-    <div>
-      {/* Salam */}
-      <div className="px-4 pb-5 pt-6 md:px-8 md:pt-10">
-        <div className="rise flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl font-semibold leading-[1.1] md:text-4xl">Halo, Suryo</h1>
-            <p className="mt-2 text-sm text-[var(--ink-soft)]">
-              {tanggalPanjang(new Date())} · angka dari dokumen, belum dari pembukuan
-            </p>
-          </div>
-          <Link to="/pesanan/baru" className="btn rise-1 rise shrink-0">+ Pesanan baru</Link>
+  if (q.isLoading) return <DashboardLoading />;
+  if (q.error || !q.data) {
+    return (
+      <div className="min-h-[70vh] bg-[#f4f6fa] p-4 sm:p-8">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-[#e6e9f0] bg-white shadow-sm">
+          <LoadError message={q.error?.message} retry={() => q.refetch()} />
         </div>
       </div>
+    );
+  }
 
-      {/* Ringkasan */}
-      <Section title="Ringkasan" note="Dokumen yang perlu diproses" className="rise-1 rise">
-        <div className="grid grid-cols-1 divide-y divide-[var(--line)] border-b border-[var(--line)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          <Link to="/pesanan?status=draft" className="block px-4 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)] md:px-8">
-            <div className="font-display text-3xl font-semibold">{d.baruCount}</div>
-            <div className="mt-1 text-sm font-medium">Pesanan baru</div>
-            <div className="text-xs text-[var(--ink-soft)]">Belum dipesan ke supplier</div>
-          </Link>
-          <Link to="/pesanan?status=ordered" className="block px-4 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)] md:px-8">
-            <div className="font-display text-3xl font-semibold">{d.menungguCount}</div>
-            <div className="mt-1 text-sm font-medium">Menunggu supplier</div>
-            <div className="text-xs text-[var(--ink-soft)]">Sudah dikirim, belum dibalas</div>
-          </Link>
-          <Link to="/faktur" className="block px-4 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)] md:px-8">
-            <div className="font-display text-3xl font-semibold">{d.selisihCount}</div>
-            <div className="mt-1 text-sm font-medium">Faktur ada selisih</div>
-            <div className="text-xs text-[var(--ink-soft)]">Hitungan sistem beda dengan faktur cetak</div>
-          </Link>
-        </div>
-      </Section>
+  const d = q.data;
+  const cards: StatCardProps[] = [
+    {
+      label: "Pesanan baru",
+      value: d.baruCount,
+      detail: "Belum diproses ke supplier",
+      badge: d.baruCount > 0 ? "Perlu diproses" : "Tidak ada antrean",
+      href: "/pesanan?status=draft",
+      icon: ClipboardList,
+      tone: "violet",
+    },
+    {
+      label: "Menunggu supplier",
+      value: d.menungguCount,
+      detail: "PO terkirim, belum ada balasan",
+      badge: d.menungguCount > 0 ? "Tindak lanjuti" : "Tidak ada antrean",
+      href: "/pesanan?status=ordered",
+      icon: Truck,
+      tone: "mint",
+    },
+    {
+      label: "Faktur ada selisih",
+      value: d.selisihCount,
+      detail: "Periksa nilai faktur dengan hitungan sistem",
+      badge: d.selisihCount > 0 ? "Perlu verifikasi" : "Tidak ada selisih",
+      href: "/faktur",
+      icon: AlertTriangle,
+      tone: "rose",
+    },
+  ];
 
-      {/* Aktivitas pesanan */}
-      <Section title="Aktivitas Pesanan" note="Nilai pesanan dan tagihan per hari, 7 hari terakhir" className="rise-2 rise">
-        <div className="pt-4">
-          <DualBars data={d.days} />
-        </div>
-      </Section>
+  const actions: { label: string; detail: string; href: string; icon: LucideIcon; tone: Tone }[] = [
+    { label: "Buat pesanan", detail: "Mulai order pelanggan", href: "/pesanan/baru", icon: ClipboardList, tone: "violet" },
+    { label: "Tindak lanjuti supplier", detail: "Catat balasan atau penerimaan PO", href: "/pesanan?status=ordered", icon: Truck, tone: "mint" },
+    { label: "Periksa faktur", detail: "Cocokkan faktur supplier", href: "/faktur", icon: FileText, tone: "rose" },
+  ];
 
-      <div className="grid grid-cols-1 lg:grid-cols-2">
-        {/* Perlu dipantau */}
-        <Section title="Perlu Dipantau" note="Dokumen yang butuh perhatian" className="rise-2 rise lg:border-r lg:border-[var(--line)]">
-          <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
-            {d.pantau.length === 0 && (
-              <p className="px-4 py-6 text-sm text-[var(--ink-soft)] md:px-8">Tidak ada dokumen yang butuh perhatian.</p>
-            )}
-            {d.pantau.map((p, i) => (
-              <Link
-                key={i}
-                to={p.kind === "selisih" ? "/faktur" : "/invoice"}
-                className="flex items-start justify-between gap-4 px-4 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)] md:px-8"
-              >
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    {p.kind === "selisih" && <AlertTriangle size={14} className="text-[var(--warn)]" />}
-                    {p.title}
-                  </div>
-                  {p.date && <div className="mt-0.5 text-xs text-[var(--ink-soft)]">Jatuh tempo {tanggal(p.date)}</div>}
+  const finance = [
+    { label: "Pendapatan bulan ini", value: d.pembukuan.pendapatan, detail: "Berdasarkan jurnal", icon: TrendingUp, tone: "violet" as const },
+    { label: "Laba kotor", value: d.pembukuan.labaKotor, detail: "Pendapatan dikurangi HPP", icon: Wallet, tone: "mint" as const },
+    { label: "Piutang", value: d.pembukuan.piutang, detail: "Saldo jurnal berjalan", icon: FileText, tone: "rose" as const },
+    { label: "Hutang", value: d.pembukuan.hutang, detail: "Saldo jurnal berjalan", icon: FileText, tone: "violet" as const },
+  ];
+
+  return (
+    <div className="min-h-full bg-[#f4f6fa] px-4 py-5 sm:px-6 md:px-8 md:py-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0">
+            <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#5966b5]">
+              <span className="inline-block size-2 rounded-full bg-[#83b9ac]" aria-hidden="true" />
+              Jena Medical Center
+              <span className="text-[#b1b7c4]">/</span>
+              <span className="text-[#667085]">Ikhtisar operasional</span>
+            </div>
+            <h1 className="font-display text-3xl font-semibold leading-tight tracking-tight text-[#20283a] sm:text-4xl">Dashboard</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#667085]">
+              Pantau pesanan, dokumen, dan kondisi pembukuan Jena dalam satu tampilan.
+            </p>
+          </div>
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+            <div className="flex min-h-11 flex-1 items-center gap-2 rounded-xl border border-[#e2e6ee] bg-white px-3 text-xs font-medium text-[#687184] sm:flex-none">
+              <CalendarDays size={15} className="text-[#5966b5]" aria-hidden="true" />
+              <span>{tanggalPanjang(new Date())}</span>
+            </div>
+            <Link to="/pesanan/baru" className="btn min-h-11 flex-1 rounded-xl border-[#20283a] bg-[#20283a] px-4 text-white hover:bg-[#303b54] sm:flex-none">
+              <ClipboardList size={16} aria-hidden="true" />
+              Pesanan baru
+            </Link>
+          </div>
+        </header>
+
+        <section aria-label="Ringkasan dokumen" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {cards.map((card) => <StatCard key={card.label} {...card} />)}
+        </section>
+
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,1fr)]">
+          <Surface className="min-w-0 overflow-hidden">
+            <div className="flex flex-wrap items-start justify-between gap-3 px-4 pb-1 pt-5 sm:px-5">
+              <div>
+                <p className="label-caps text-[#5966b5]">Aktivitas</p>
+                <h2 className="mt-1 font-display text-lg font-semibold text-[#252d3f]">Pesanan & penagihan</h2>
+                <p className="mt-1 text-xs text-[#667085]">Nilai harian selama tujuh hari terakhir</p>
+              </div>
+              <span className="rounded-full bg-[#f1f2ff] px-3 py-1.5 text-[0.68rem] font-semibold text-[#5963a9]">7 hari terakhir</span>
+            </div>
+            <div className="px-4 pb-5 pt-3 sm:px-5">
+              <DualBars data={d.days} height={190} />
+            </div>
+          </Surface>
+
+          <Surface className="min-w-0 overflow-hidden">
+            <div className="flex items-start justify-between gap-3 px-4 pb-4 pt-5 sm:px-5">
+              <div>
+                <p className="label-caps text-[#a14c66]">Tindak lanjut</p>
+                <h2 className="mt-1 font-display text-lg font-semibold text-[#252d3f]">Perlu dipantau</h2>
+                <p className="mt-1 text-xs text-[#667085]">Dokumen yang butuh perhatian</p>
+              </div>
+              <span className="grid size-9 place-items-center rounded-xl bg-[#fff0f3] text-[#a14c66]">
+                <AlertTriangle size={17} aria-hidden="true" />
+              </span>
+            </div>
+            <div className="border-t border-[#edf0f4]">
+              {d.pantau.length === 0 ? (
+                <div className="flex min-h-44 flex-col items-center justify-center px-5 py-8 text-center">
+                  <span className="grid size-11 place-items-center rounded-full bg-[#eaf6f1] text-[#2f7568]"><CheckCircle2 size={21} aria-hidden="true" /></span>
+                  <p className="mt-3 text-sm font-semibold text-[#354254]">Tidak ada yang mendesak</p>
+                  <p className="mt-1 max-w-xs text-xs leading-relaxed text-[#667085]">Dokumen yang memerlukan perhatian akan muncul di sini.</p>
                 </div>
-                <div className="text-right">
-                  {p.lines.map((l, j) => (
-                    <div key={j} className="text-xs text-[var(--ink-soft)]">
-                      {l.label} <span className="text-sm font-semibold text-[var(--ink)]">{l.value}</span>
-                    </div>
+              ) : (
+                <div className="divide-y divide-[#edf0f4]">
+                  {d.pantau.map((item, i) => (
+                    <Link
+                      key={`${item.kind}-${item.title}-${i}`}
+                      to={item.kind === "selisih" ? "/faktur" : "/invoice"}
+                      className="group flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-[#fafbfc] sm:px-5"
+                    >
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-sm font-semibold text-[#30394a]">{item.title}</h3>
+                          {item.date && <p className="mt-1 text-xs text-[#667085]">Jatuh tempo {tanggal(item.date)}</p>}
+                        </div>
+                        <ArrowUpRight size={16} className="mt-0.5 shrink-0 text-[#a0a7b5] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#5966b5]" aria-hidden="true" />
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {item.lines.map((line, j) => (
+                          <span key={`${line.label}-${j}`} className="min-w-0 text-xs text-[#667085]">
+                            {line.label}: <b className="font-semibold text-[#4a5364]">{line.value}</b>
+                          </span>
+                        ))}
+                      </div>
+                    </Link>
                   ))}
                 </div>
+              )}
+            </div>
+          </Surface>
+        </div>
+
+        <section aria-labelledby="quick-actions-heading">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <p className="label-caps text-[#5966b5]">Aksi cepat</p>
+              <h2 id="quick-actions-heading" className="mt-1 font-display text-lg font-semibold text-[#252d3f]">Lanjutkan pekerjaan</h2>
+            </div>
+            <Link to="/pesanan" className="hidden items-center gap-1 text-xs font-semibold text-[#5963a9] hover:text-[#3d4b93] sm:flex">
+              Semua pesanan <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {actions.map(({ label, detail, href, icon: Icon, tone }) => (
+              <Link key={label} to={href} className="group flex min-h-[92px] items-center gap-3 rounded-2xl border border-[#e6e9f0] bg-white p-4 shadow-[0_12px_30px_-26px_rgba(24,35,56,0.45)] transition hover:-translate-y-0.5 hover:border-[#d5dae5] hover:shadow-md focus-visible:outline-offset-4">
+                <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${toneStyles[tone].icon}`}><Icon size={18} aria-hidden="true" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-[#30394a]">{label}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-[#667085]">{detail}</span>
+                </span>
+                <ArrowRight size={16} className="shrink-0 text-[#a0a7b5] transition group-hover:translate-x-0.5 group-hover:text-[#5966b5]" aria-hidden="true" />
               </Link>
             ))}
           </div>
-        </Section>
+        </section>
 
-        {/* Perlu tindakan */}
-        <Section title="Perlu Tindakan" note="Urut dari yang paling mendesak" className="rise-3 rise">
-          <div className="border-b border-[var(--line)]">
-            <div className="grid grid-cols-3 divide-x divide-[var(--line)] border-b border-[var(--line)] text-center">
-              <Link to="/pesanan?status=draft" className="block px-2 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)]">
-                <div className="font-display text-2xl font-semibold">{d.baruCount}</div>
-                <div className="mt-1 text-xs font-medium">Belum dipesan</div>
-                <div className="mt-2 inline-block text-xs font-semibold text-[var(--slate-deep)]">Buat order →</div>
-              </Link>
-              <Link to="/pesanan?status=ordered" className="block px-2 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)]">
-                <div className="font-display text-2xl font-semibold">{d.menungguCount}</div>
-                <div className="mt-1 text-xs font-medium">Menunggu balasan</div>
-                <div className="mt-2 inline-block text-xs font-semibold text-[var(--slate-deep)]">Catat balasan →</div>
-              </Link>
-              <Link to="/faktur" className="block px-2 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)]">
-                <div className="font-display text-2xl font-semibold">{d.selisihCount}</div>
-                <div className="mt-1 text-xs font-medium">Faktur selisih</div>
-                <div className="mt-2 inline-block text-xs font-semibold text-[var(--slate-deep)]">Periksa →</div>
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
+          <Surface className="min-w-0 overflow-hidden">
+            <div className="flex flex-wrap items-start justify-between gap-3 px-4 pb-4 pt-5 sm:px-5">
+              <div>
+                <p className="label-caps text-[#2f7568]">Dari jurnal yang dibukukan</p>
+                <h2 className="mt-1 font-display text-lg font-semibold text-[#252d3f]">Ikhtisar pembukuan</h2>
+                <p className="mt-1 text-xs text-[#667085]">Angka bulan berjalan</p>
+              </div>
+              <Link to="/laporan" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[#5963a9] transition hover:bg-[#f1f2ff]">
+                Buka laporan <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 divide-x divide-[var(--line)]">
-              <div className="px-4 py-4 md:px-8">
-                <div className="label-caps">Ditagih</div>
-                <div className="font-display mt-1 text-xl font-semibold">{rpShort(d.ditagih)}</div>
-                <div className="mt-1 text-xs text-[var(--ink-soft)]">
-                  Draf {d.invoiceStatus.draf} · Terbit {d.invoiceStatus.terbit} · Lunas {d.invoiceStatus.lunas}
-                </div>
-              </div>
-              <div className="px-4 py-4 md:px-8">
-                <div className="label-caps">Belum ditagih</div>
-                <div className="font-display mt-1 text-xl font-semibold">{rpShort(d.belumDitagih)}</div>
-                <div className="mt-1 text-xs text-[var(--ink-soft)]">
-                  Siap ditagih: {d.siapDitagihCount} pesanan{" "}
-                  {d.siapDitagihCount > 0 && (
-                    <Link to="/pesanan?status=confirmed" className="font-semibold text-[var(--slate-deep)] underline">Buat invoice</Link>
-                  )}
-                </div>
-              </div>
+            <div className="grid grid-cols-1 gap-3 border-t border-[#edf0f4] p-4 sm:grid-cols-2 sm:p-5">
+              {finance.map((metric) => <FinanceMetric key={metric.label} {...metric} />)}
             </div>
-          </div>
-        </Section>
-      </div>
+            <div className="border-t border-[#edf0f4] px-4 pb-5 pt-4 sm:px-5">
+              <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                <h3 className="text-sm font-semibold text-[#30394a]">Pendapatan dibanding HPP</h3>
+                <span className="text-[0.68rem] text-[#667085]">Tren 6 bulan</span>
+              </div>
+              <TrendBars data={d.tren} height={160} />
+            </div>
+          </Surface>
 
-      {/* Ikhtisar pembukuan */}
-      <Section
-        title="Ikhtisar"
-        note="Angka dari jurnal yang sudah dibukukan"
-        className="rise-3 rise"
-      >
-        <div className="border-b border-[var(--line)]">
-          <div className="grid grid-cols-2 divide-x divide-[var(--line)] border-b border-[var(--line)] text-sm md:grid-cols-4">
-            <div className="px-4 py-4 md:px-8">
-              <div className="label-caps">Draf invoice</div>
-              <div className="font-display mt-1 text-2xl font-semibold">{d.dokumenBelumDibukukan.drafInvoice}</div>
-              <div className="text-xs text-[var(--ink-soft)]">{rp(d.dokumenBelumDibukukan.nilaiDrafInvoice)} · belum jadi piutang</div>
+          <Surface className="min-w-0 overflow-hidden">
+            <div className="px-4 pb-4 pt-5 sm:px-5">
+              <p className="label-caps text-[#5966b5]">Status dokumen</p>
+              <h2 className="mt-1 font-display text-lg font-semibold text-[#252d3f]">Tagihan & draf</h2>
+              <p className="mt-1 text-xs text-[#667085]">Ringkasan dokumen operasional</p>
             </div>
-            <div className="px-4 py-4 md:px-8">
-              <div className="label-caps">Draf faktur supplier</div>
-              <div className="font-display mt-1 text-2xl font-semibold">{d.dokumenBelumDibukukan.drafFaktur}</div>
-              <div className="text-xs text-[var(--ink-soft)]">{rp(d.dokumenBelumDibukukan.nilaiDrafFaktur)} · belum jadi hutang</div>
-            </div>
-            <div className="px-4 py-4 md:px-8">
-              <div className="label-caps">Pendapatan bulan ini</div>
-              <div className="font-display mt-1 text-2xl font-semibold">{rpShort(d.pembukuan.pendapatan)}</div>
-              <div className="text-xs text-[var(--ink-soft)]">dari pembukuan</div>
-            </div>
-            <div className="px-4 py-4 md:px-8">
-              <div className="label-caps">Laba kotor</div>
-              <div className="font-display mt-1 text-2xl font-semibold">{rpShort(d.pembukuan.labaKotor)}</div>
-              <div className="text-xs text-[var(--ink-soft)]">
-                Piutang {rpShort(d.pembukuan.piutang)} · Hutang {rpShort(d.pembukuan.hutang)}
+            <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f4] p-4 sm:p-5">
+              <div className="rounded-xl bg-[#f7f8fb] p-3 sm:p-4">
+                <p className="text-xs font-medium text-[#687184]">Nilai ditagih</p>
+                <p className="mt-2 truncate font-display text-lg font-semibold text-[#252d3f]" title={rp(d.ditagih)}>{rpShort(d.ditagih)}</p>
+                <p className="mt-1 text-[0.65rem] leading-relaxed text-[#667085]">Draf {d.invoiceStatus.draf} · Terbit {d.invoiceStatus.terbit} · Lunas {d.invoiceStatus.lunas}</p>
+              </div>
+              <div className="rounded-xl bg-[#f7f8fb] p-3 sm:p-4">
+                <p className="text-xs font-medium text-[#687184]">Belum ditagih</p>
+                <p className="mt-2 truncate font-display text-lg font-semibold text-[#252d3f]" title={rp(d.belumDitagih)}>{rpShort(d.belumDitagih)}</p>
+                <p className="mt-1 text-[0.65rem] leading-relaxed text-[#667085]">Siap ditagih: {d.siapDitagihCount} pesanan</p>
+                {d.siapDitagihCount > 0 && <Link to="/pesanan?status=confirmed" className="mt-2 inline-flex min-h-8 items-center gap-1 text-xs font-semibold text-[#5963a9] underline underline-offset-2">Buat invoice <ArrowRight size={13} aria-hidden="true" /></Link>}
               </div>
             </div>
-          </div>
-
-          <div className="border-b border-[var(--line)] py-4">
-            <div className="label-caps px-4 pb-2 md:px-8">Tren 6 bulan — pendapatan dibanding harga pokok</div>
-            <TrendBars data={d.tren} />
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-8">
-            <p className="text-xs text-[var(--ink-soft)]">
-              Sebelum tutup buku: {d.perluDiselesaikan.pajakMasukBelumLengkap} faktur pajak masuk belum lengkap ·{" "}
-              {d.perluDiselesaikan.fakturSelisih} faktur selisih · {d.perluDiselesaikan.drafInvoice} draf invoice
+            <div className="grid grid-cols-2 gap-3 px-4 pb-4 sm:px-5">
+              <div className="flex items-start gap-2 rounded-xl border border-[#edf0f4] p-3">
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#eef0ff] text-[#5966b5]"><FileText size={16} aria-hidden="true" /></span>
+                <div className="min-w-0"><p className="text-xs text-[#667085]">Draf invoice</p><p className="mt-0.5 text-sm font-semibold text-[#30394a]">{d.dokumenBelumDibukukan.drafInvoice} · {rpShort(d.dokumenBelumDibukukan.nilaiDrafInvoice)}</p></div>
+              </div>
+              <div className="flex items-start gap-2 rounded-xl border border-[#edf0f4] p-3">
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#e8f6f2] text-[#2f7568]"><FileText size={16} aria-hidden="true" /></span>
+                <div className="min-w-0"><p className="text-xs text-[#667085]">Draf faktur supplier</p><p className="mt-0.5 text-sm font-semibold text-[#30394a]">{d.dokumenBelumDibukukan.drafFaktur} · {rpShort(d.dokumenBelumDibukukan.nilaiDrafFaktur)}</p></div>
+              </div>
+            </div>
+            <div className="border-t border-[#edf0f4] px-4 py-4 sm:px-5">
+              <p className="text-xs leading-relaxed text-[#667085]">
+                Sebelum tutup buku: {d.perluDiselesaikan.pajakMasukBelumLengkap} faktur pajak belum lengkap · {d.perluDiselesaikan.fakturSelisih} faktur selisih · {d.perluDiselesaikan.drafInvoice} draf invoice.
+              </p>
+            </div>
+            <p className="px-4 pb-5 text-[0.68rem] leading-relaxed text-[#667085] sm:px-5">
+              Ringkasan PPN bukan SPT atau e-Faktur. Draf belum menjadi pendapatan, piutang, atau hutang.
             </p>
-            <Link to="/laporan" className="btn btn-ghost">
-              Buka laporan <ArrowRight size={14} />
-            </Link>
-          </div>
+          </Surface>
         </div>
-        <p className="px-4 py-4 text-xs leading-relaxed text-[var(--ink-soft)] md:px-8">
-          Pembukuan internal saja. Angka laporan bersumber dari jurnal yang sudah dibukukan; draf invoice dan faktur
-          supplier belum menjadi pendapatan, piutang, atau hutang. Ringkasan PPN bukan SPT atau e-Faktur.
+
+        <p className="px-1 pb-2 text-[0.68rem] leading-relaxed text-[#667085]">
+          Angka operasional berasal dari dokumen; angka keuangan bersumber dari jurnal yang sudah dibukukan.
         </p>
-      </Section>
+      </div>
     </div>
   );
 }
