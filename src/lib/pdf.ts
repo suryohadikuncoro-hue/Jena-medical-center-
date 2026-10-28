@@ -97,7 +97,7 @@ export async function shareInvoicePdf(inv: { number: string; issueDate: string; 
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const page = pdf.addPage([595, 842]);
   header(page, "INVOICE PELANGGAN", inv.number, inv.issueDate, bold, regular);
-  infoBox(page, "Kepada", `${inv.customerName}${inv.customerAddress ? `\n${inv.customerAddress}` : ""}`, 42, 690, 310, bold, regular);
+  infoBox(page, "Kepada Yth.", `${inv.customerName}${inv.customerAddress ? `\n${inv.customerAddress}` : ""}`, 42, 690, 310, bold, regular);
   infoBox(page, "Jatuh tempo", inv.dueDate || "-", 365, 690, 188, bold, regular);
   let y = 655;
   const cols = [{ label: "DESKRIPSI", x: 54, width: 225 }, { label: "QTY", x: 300, width: 42, align: "right" as const }, { label: "HARGA", x: 350, width: 90, align: "right" as const }, { label: "JUMLAH", x: 450, width: 91, align: "right" as const }];
