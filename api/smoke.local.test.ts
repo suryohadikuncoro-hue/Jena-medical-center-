@@ -141,12 +141,14 @@ describe.skipIf(!databaseUrl)("authenticated local smoke simulation (local Postg
       poId: po.id,
       number: "SMOKE-SI-001",
       invoiceDate: date,
-      printedTotal: 12_000,
+      printedTotal: 4_944,
       taxInvoiceComplete: false,
-      items: [{ productId: 2, qty: 3, unitCost: 4_000, discountPercent: 0, ppnPercent: 0 }],
+      items: [{ productId: 2, qty: 3, unitCost: 4_000, discountPercent: 58.8, ppnPercent: 0 }],
     });
+    const savedDiscount = await sql`select discount_percent from supplier_invoice_items where invoice_id = ${supplierInvoice.id}`;
+    expect(Number(savedDiscount[0].discount_percent)).toBeCloseTo(58.8);
     const result = await api.orders.postSupplierInvoice.mutate({ id: supplierInvoice.id });
-    expect(result.total).toBe(12_000);
+    expect(result.total).toBe(4_944);
     const row = await sql`select status from supplier_invoices where id = ${supplierInvoice.id}`;
     expect(row[0].status).toBe("posted");
     expect((await sql`select stock_qty from products where id = 2`)[0].stock_qty).toBe(4);

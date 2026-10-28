@@ -7,6 +7,7 @@ import {
   text,
   timestamp,
   integer,
+  numeric,
   boolean,
 } from "drizzle-orm/pg-core";
 
@@ -126,7 +127,7 @@ export const supplierInvoiceItems = pgTable("supplier_invoice_items", {
   productId: bigint("product_id", { mode: "number" }).notNull(),
   qty: integer("qty").notNull(),
   unitCost: integer("unit_cost").notNull(),
-  discountPercent: integer("discount_percent").notNull().default(0),
+  discountPercent: numeric("discount_percent", { mode: "number" }).notNull().default(0),
   ppnPercent: integer("ppn_percent").notNull().default(0),
 });
 
