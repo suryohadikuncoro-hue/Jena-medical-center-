@@ -1,4 +1,5 @@
 import { eq, desc, asc, and, gte, lte, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { getDb } from "./connection";
 import {
   accounts,
@@ -41,7 +42,15 @@ export function assertPaymentWithinOutstanding(amount: number, outstanding: numb
 }
 
 export function assertSufficientStock(stockQty: number, qty: number, productName: string) {
-  if (qty <= 0 || stockQty < qty) throw new Error(`Stok ${productName} tidak mencukupi`);
+  if (qty <= 0) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: `Jumlah ${productName} pada invoice harus lebih dari 0` });
+  }
+  if (stockQty < qty) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: `Stok ${productName} tidak cukup: tersedia ${stockQty}, dibutuhkan ${qty}. Perbarui stok sesuai barang fisik atau koreksi jumlah invoice.`,
+    });
+  }
 }
 
 async function accountId(code: string, db: DbLike = getDb()): Promise<number> {
