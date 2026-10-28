@@ -306,7 +306,7 @@ export const ordersRouter = createRouter({
           productId: z.number(),
           qty: z.number().int().min(1),
           unitCost: z.number().int().min(0),
-          discountPercent: z.number().int().min(0).max(100).default(0),
+          discountPercent: z.number().finite().min(0).max(100).default(0),
           ppnPercent: z.number().int().min(0).max(100).default(0),
         })).min(1),
       }),
