@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { TRPCError } from "@trpc/server";
 import {
   assertPaymentReference,
   assertPaymentWithinOutstanding,
@@ -30,8 +31,20 @@ describe("business transaction guards", () => {
 
   it("rejects sales quantities above available stock", () => {
     expect(() => assertSufficientStock(10, 10, "Masker")).not.toThrow();
-    expect(() => assertSufficientStock(9, 10, "Masker")).toThrow("Stok Masker tidak mencukupi");
-    expect(() => assertSufficientStock(10, 0, "Masker")).toThrow("Stok Masker tidak mencukupi");
+    let stockError: unknown;
+    try {
+      assertSufficientStock(9, 10, "Masker");
+    } catch (error) {
+      stockError = error;
+    }
+    expect(stockError).toBeInstanceOf(TRPCError);
+    expect((stockError as TRPCError).code).toBe("PRECONDITION_FAILED");
+    expect((stockError as Error).message).toBe(
+      "Stok Masker tidak cukup: tersedia 9, dibutuhkan 10. Perbarui stok sesuai barang fisik atau koreksi jumlah invoice.",
+    );
+    expect(() => assertSufficientStock(10, 0, "Masker")).toThrow(
+      "Jumlah Masker pada invoice harus lebih dari 0",
+    );
   });
 
   it("calculates an order total from all line items", () => {
