@@ -6,40 +6,40 @@
 
 @layer base {
   :root {
-    /* Warm off-white scheme — from the retrieved palette */
-    --paper: #eeece7;
-    --paper-2: #d8d2cb;
-    --ink: #292929;
-    --ink-soft: #57534b;
-    --slate: #687886;
-    --slate-deep: #4d5b68;
-    --slate-hover: #98a3ac;
-    --line: #c9c4ba;
-    --line-strong: #292929;
-    --warn: #a2662a;
-    --bad: #9b3a2e;
-    --ok: #3e6b4f;
+    /* Cool clinical palette: calm canvas, high-contrast ink, restrained indigo/teal accents. */
+    --paper: #f4f6fa;
+    --paper-2: #e9edf5;
+    --ink: #20283a;
+    --ink-soft: #667085;
+    --slate: #5966b5;
+    --slate-deep: #3d4b93;
+    --slate-hover: #e7eaff;
+    --line: #e6e9f0;
+    --line-strong: #d5dae5;
+    --warn: #9a6700;
+    --bad: #a33f55;
+    --ok: #2f7568;
 
-    --background: 43 15% 92%;
-    --foreground: 0 0% 16%;
-    --card: 43 15% 92%;
-    --card-foreground: 0 0% 16%;
-    --popover: 43 15% 94%;
-    --popover-foreground: 0 0% 16%;
-    --primary: 207 13% 47%;
-    --primary-foreground: 43 15% 96%;
-    --secondary: 30 11% 82%;
-    --secondary-foreground: 0 0% 16%;
-    --muted: 30 11% 85%;
-    --muted-foreground: 30 6% 35%;
-    --accent: 30 11% 84%;
-    --accent-foreground: 0 0% 16%;
-    --destructive: 6 55% 39%;
-    --destructive-foreground: 43 15% 96%;
-    --border: 36 10% 79%;
-    --input: 36 10% 79%;
-    --ring: 207 13% 40%;
-    --radius: 0;
+    --background: 220 24% 98%;
+    --foreground: 224 28% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 28% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 28% 18%;
+    --primary: 233 39% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 94%;
+    --secondary-foreground: 224 28% 18%;
+    --muted: 220 20% 95%;
+    --muted-foreground: 220 10% 43%;
+    --accent: 230 65% 96%;
+    --accent-foreground: 233 39% 40%;
+    --destructive: 347 45% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 18% 90%;
+    --input: 220 18% 90%;
+    --ring: 233 39% 53%;
+    --radius: 0.75rem;
   }
 
   html {
@@ -94,12 +94,12 @@
     border-top: 1px solid var(--line);
   }
   .rule-strong {
-    border-top: 1px solid var(--line-strong);
+    border-top: 1px solid var(--line);
   }
 
   .label-caps {
-    font-size: 0.6875rem;
-    letter-spacing: 0.08em;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     font-weight: 600;
     color: var(--ink-soft);
@@ -115,13 +115,14 @@
     font-size: 0.875rem;
     font-weight: 600;
     border: 1px solid var(--ink);
+    border-radius: 0.75rem;
     background: var(--ink);
     color: var(--paper);
     cursor: pointer;
     transition: background-color 180ms ease-out, color 180ms ease-out, border-color 180ms ease-out;
   }
-  .btn:hover { background: #3d3d3d; }
-  .btn:active { background: #171717; }
+  .btn:hover { background: #303b54; }
+  .btn:active { background: #182131; }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   .btn-accent {
@@ -130,7 +131,7 @@
     color: #fff;
   }
   .btn-accent:hover { background: var(--slate-deep); }
-  .btn-accent:active { background: #3d4a55; }
+  .btn-accent:active { background: #303d80; }
 
   .btn-ghost {
     background: transparent;
@@ -145,12 +146,13 @@
     min-height: 44px;
     padding: 0 0.75rem;
     font-size: 0.9375rem;
-    background: transparent;
-    border: 1px solid var(--line);
+    background: #fff;
+    border: 1px solid var(--line-strong);
+    border-radius: 0.75rem;
     color: var(--ink);
     transition: border-color 150ms ease-out;
   }
-  .input:focus, .select:focus { border-color: var(--ink); outline: none; }
+  .input:focus, .select:focus { border-color: var(--slate); outline: none; box-shadow: 0 0 0 3px rgb(89 102 181 / 14%); }
   .input::placeholder { color: #8a857a; }
 
   /* staggered entrance */
@@ -177,11 +179,11 @@
     display: inline-flex;
     align-items: center;
     min-height: 24px;
-    padding: 0 0.5rem;
-    font-size: 0.6875rem;
+    padding: 0 0.625rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border: 1px solid currentColor;
+    letter-spacing: 0;
+    border: 0;
+    border-radius: 9999px;
   }
 }

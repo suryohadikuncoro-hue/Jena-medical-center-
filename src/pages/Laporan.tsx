@@ -19,13 +19,20 @@ export default function Laporan() {
         action={<label className="label-caps flex flex-col gap-1" htmlFor="report-month">Periode laporan<input id="report-month" className="input w-auto" type="month" value={month} onChange={(e) => setMonth(e.target.value)} /></label>}
       />
 
-      <div className="flex gap-2 overflow-x-auto px-4 pb-4 md:px-8">
+      <div className="px-4 pb-4 md:hidden">
+        <label className="label-caps block" htmlFor="report-tab-mobile">Jenis laporan</label>
+        <select id="report-tab-mobile" className="select mt-1" value={tab} onChange={(e) => setTab(e.target.value as Tab)}>
+          {TABS.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
+      <div className="hidden flex-wrap gap-2 px-4 pb-4 md:flex md:px-8">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`min-h-[44px] shrink-0 border px-4 text-sm font-medium transition-colors duration-200 ${
-              tab === t ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--paper)]" : "border-[var(--line-strong)] hover:bg-[var(--paper-2)]"
+            aria-pressed={tab === t}
+            className={`min-h-[44px] rounded-xl border px-4 text-sm font-medium transition-colors duration-200 ${
+              tab === t ? "border-[var(--ink)] bg-[var(--ink)] text-white" : "border-[var(--line-strong)] bg-white hover:bg-[var(--paper-2)]"
             }`}
           >
             {t}
@@ -184,13 +191,20 @@ function Jurnal({ month }: { month: string }) {
                 <span className="text-sm font-semibold">{e.memo}</span>
                 <span className="text-xs text-[var(--ink-soft)]">{tanggal(e.date)}</span>
               </div>
-              <table className="mt-2 w-full text-sm">
+              <table className="mt-2 w-full table-fixed text-xs sm:text-sm">
+                <thead>
+                  <tr className="text-left text-[0.65rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
+                    <th scope="col" className="w-[54%] py-1 pr-2">Akun</th>
+                    <th scope="col" className="w-[23%] py-1 text-right">Debit</th>
+                    <th scope="col" className="w-[23%] py-1 pl-2 text-right">Kredit</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {e.lines.map((l) => (
                     <tr key={l.id} className="border-t border-[var(--line)]">
-                      <td className="py-1.5 pr-2 text-[var(--ink-soft)]">{l.code} · {l.name}</td>
-                      <td className="py-1.5 text-right">{l.debit > 0 ? rp(l.debit) : ""}</td>
-                      <td className="py-1.5 pl-2 text-right">{l.credit > 0 ? rp(l.credit) : ""}</td>
+                      <td className="break-words py-1.5 pr-2 text-[var(--ink-soft)]">{l.code} · {l.name}</td>
+                      <td className="break-words py-1.5 text-right tabular-nums">{l.debit > 0 ? rp(l.debit) : "—"}</td>
+                      <td className="break-words py-1.5 pl-2 text-right tabular-nums">{l.credit > 0 ? rp(l.credit) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -225,9 +239,22 @@ function BukuBesar({ month }: { month: string }) {
           </select>
         </div>
         <KV k="Saldo awal" v={rp(q.data.opening)} />
-        {q.data.rows.length ? q.data.rows.map((r, i) => (
-          <KV key={i} k={`${tanggal(r.date)} · ${r.memo}`} v={`${r.debit > 0 ? `D ${rp(r.debit)}` : `K ${rp(r.credit)}`} → ${rp(r.balance)}`} />
-        )) : <Empty text="Belum ada transaksi untuk akun dan periode ini." />}
+        {q.data.rows.length ? (
+          <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
+            {q.data.rows.map((r, i) => (
+              <div key={i} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2.5 md:px-6">
+                <div className="min-w-0 flex-1">
+                  <div className="break-words text-sm font-medium">{tanggal(r.date)} · {r.memo}</div>
+                  <div className="mt-0.5 text-xs text-[var(--ink-soft)]">{r.debit > 0 ? "Debit" : "Kredit"}: {rp(r.debit > 0 ? r.debit : r.credit)}</div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="label-caps">Saldo berjalan</div>
+                  <div className="text-sm font-semibold tabular-nums">{rp(r.balance)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : <Empty text="Belum ada transaksi untuk akun dan periode ini." />}
         <KV k="Saldo akhir" v={rp(q.data.closing)} strong />
       </div>
     </Section>

@@ -28,6 +28,7 @@ type StatCardProps = {
   href: string;
   icon: LucideIcon;
   tone: Tone;
+  className?: string;
 };
 
 const toneStyles: Record<Tone, { icon: string; badge: string }> = {
@@ -44,13 +45,13 @@ function Surface({ children, className = "" }: { children: ReactNode; className?
   );
 }
 
-function StatCard({ label, value, detail, badge, href, icon: Icon, tone }: StatCardProps) {
+function StatCard({ label, value, detail, badge, href, icon: Icon, tone, className = "" }: StatCardProps) {
   const style = toneStyles[tone];
   return (
     <Link
       to={href}
       aria-label={`${label}: ${value}. ${detail}`}
-      className="group min-w-0 rounded-2xl border border-[#e6e9f0] bg-white p-4 shadow-[0_12px_30px_-26px_rgba(24,35,56,0.45)] transition duration-200 hover:-translate-y-0.5 hover:border-[#d5dae5] hover:shadow-[0_18px_35px_-25px_rgba(24,35,56,0.35)] focus-visible:outline-offset-4 sm:p-5"
+      className={`group min-w-0 rounded-2xl border border-[#e6e9f0] bg-white p-3 shadow-[0_12px_30px_-26px_rgba(24,35,56,0.45)] transition duration-200 hover:-translate-y-0.5 hover:border-[#d5dae5] hover:shadow-[0_18px_35px_-25px_rgba(24,35,56,0.35)] focus-visible:outline-offset-4 sm:p-5 ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
         <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${style.icon}`}>
@@ -71,14 +72,14 @@ function StatCard({ label, value, detail, badge, href, icon: Icon, tone }: StatC
 function FinanceMetric({ label, value, detail, icon: Icon, tone }: { label: string; value: number; detail: string; icon: LucideIcon; tone: Tone }) {
   const style = toneStyles[tone];
   return (
-    <div className="min-w-0 rounded-xl bg-[#f7f8fb] p-4 sm:p-5" title={rp(value)}>
+    <div className="min-w-0 rounded-xl bg-[#f7f8fb] p-3 sm:p-5">
       <div className="flex items-center gap-2.5">
         <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${style.icon}`}>
           <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
         </span>
         <span className="text-xs font-medium text-[#687184]">{label}</span>
       </div>
-      <div className="mt-3 truncate font-display text-xl font-semibold tracking-tight text-[#252d3f] sm:text-2xl">{rpShort(value)}</div>
+      <div className="mt-3 break-words font-display text-base font-semibold tracking-tight text-[#252d3f] tabular-nums sm:text-xl" title={rp(value)}>{rp(value)}</div>
       <p className="mt-1 text-[0.7rem] leading-relaxed text-[#667085]">{detail}</p>
     </div>
   );
@@ -183,11 +184,11 @@ export default function Beranda() {
           </div>
         </header>
 
-        <section aria-label="Ringkasan dokumen" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {cards.map((card) => <StatCard key={card.label} {...card} />)}
+        <section aria-label="Ringkasan dokumen" className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+          {cards.map((card, index) => <StatCard key={card.label} {...card} className={index === 2 ? "col-span-2 sm:col-span-1" : ""} />)}
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,1fr)]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(270px,1fr)] xl:gap-5">
           <Surface className="min-w-0 overflow-hidden">
             <div className="flex flex-wrap items-start justify-between gap-3 px-4 pb-1 pt-5 sm:px-5">
               <div>
@@ -274,7 +275,7 @@ export default function Beranda() {
           </div>
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(270px,1fr)] xl:gap-5">
           <Surface className="min-w-0 overflow-hidden">
             <div className="flex flex-wrap items-start justify-between gap-3 px-4 pb-4 pt-5 sm:px-5">
               <div>
@@ -286,7 +287,7 @@ export default function Beranda() {
                 Buka laporan <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 gap-3 border-t border-[#edf0f4] p-4 sm:grid-cols-2 sm:p-5">
+            <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f4] p-3 sm:p-5">
               {finance.map((metric) => <FinanceMetric key={metric.label} {...metric} />)}
             </div>
             <div className="border-t border-[#edf0f4] px-4 pb-5 pt-4 sm:px-5">
@@ -307,12 +308,12 @@ export default function Beranda() {
             <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f4] p-4 sm:p-5">
               <div className="rounded-xl bg-[#f7f8fb] p-3 sm:p-4">
                 <p className="text-xs font-medium text-[#687184]">Nilai ditagih</p>
-                <p className="mt-2 truncate font-display text-lg font-semibold text-[#252d3f]" title={rp(d.ditagih)}>{rpShort(d.ditagih)}</p>
+                <p className="mt-2 break-words font-display text-sm font-semibold text-[#252d3f] tabular-nums sm:text-base" title={rp(d.ditagih)}>{rp(d.ditagih)}</p>
                 <p className="mt-1 text-[0.65rem] leading-relaxed text-[#667085]">Draf {d.invoiceStatus.draf} · Terbit {d.invoiceStatus.terbit} · Lunas {d.invoiceStatus.lunas}</p>
               </div>
               <div className="rounded-xl bg-[#f7f8fb] p-3 sm:p-4">
                 <p className="text-xs font-medium text-[#687184]">Belum ditagih</p>
-                <p className="mt-2 truncate font-display text-lg font-semibold text-[#252d3f]" title={rp(d.belumDitagih)}>{rpShort(d.belumDitagih)}</p>
+                <p className="mt-2 break-words font-display text-sm font-semibold text-[#252d3f] tabular-nums sm:text-base" title={rp(d.belumDitagih)}>{rp(d.belumDitagih)}</p>
                 <p className="mt-1 text-[0.65rem] leading-relaxed text-[#667085]">Siap ditagih: {d.siapDitagihCount} pesanan</p>
                 {d.siapDitagihCount > 0 && <Link to="/pesanan?status=confirmed" className="mt-2 inline-flex min-h-8 items-center gap-1 text-xs font-semibold text-[#5963a9] underline underline-offset-2">Buat invoice <ArrowRight size={13} aria-hidden="true" /></Link>}
               </div>

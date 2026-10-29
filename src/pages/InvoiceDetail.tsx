@@ -40,7 +40,7 @@ export default function InvoiceDetail() {
         action={<StatusBadge status={inv.status} />}
       />
 
-      <Section title="Rincian tagihan">
+      <Section title="Rincian tagihan" note={`Terbit ${tanggal(inv.issueDate)} · jatuh tempo ${tanggal(inv.dueDate)}`}>
         <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
           {items.map((it) => (
             <div key={it.id} className="flex items-baseline justify-between gap-4 px-4 py-3 md:px-8">

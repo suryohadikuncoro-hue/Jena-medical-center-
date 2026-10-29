@@ -4,27 +4,33 @@ type ChartRow = { label: string; left: number; right: number };
 
 function ChartDataTable({ caption, leftLabel, rightLabel, rows }: { caption: string; leftLabel: string; rightLabel: string; rows: ChartRow[] }) {
   return (
-    <div className="sr-only">
-      <table>
-        <caption>{caption}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Periode</th>
-            <th scope="col">{leftLabel}</th>
-            <th scope="col">{rightLabel}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={`${row.label}-${i}`}>
-              <th scope="row">{row.label}</th>
-              <td>{rp(row.left)}</td>
-              <td>{rp(row.right)}</td>
+    <details className="mt-3 border-t border-[#edf0f4] pt-2">
+      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-[#5963a9]">
+        Lihat rincian angka
+        <span className="font-normal text-[#667085]">{rows.length} periode</span>
+      </summary>
+      <div className="mt-1 overflow-hidden rounded-xl bg-[#f7f8fb]">
+        <table className="w-full table-fixed text-[0.68rem] sm:text-xs">
+          <caption className="sr-only">{caption}</caption>
+          <thead>
+            <tr className="text-left text-[#667085]">
+              <th scope="col" className="w-[30%] px-2 py-2 font-medium">Periode</th>
+              <th scope="col" className="w-[35%] px-2 py-2 text-right font-medium">{leftLabel}</th>
+              <th scope="col" className="w-[35%] px-2 py-2 text-right font-medium">{rightLabel}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={`${row.label}-${i}`} className="border-t border-[#e6e9f0]">
+                <th scope="row" className="break-words px-2 py-2 text-left font-medium text-[#344054]">{row.label}</th>
+                <td className="break-words px-2 py-2 text-right tabular-nums text-[#344054]">{rp(row.left)}</td>
+                <td className="break-words px-2 py-2 text-right tabular-nums text-[#344054]">{rp(row.right)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
   );
 }
 
