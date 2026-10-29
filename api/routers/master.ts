@@ -3,16 +3,20 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, protectedProcedure } from "../middleware";
 import { getDb } from "../queries/connection";
 import { customers, customerPrices, invoiceItems, products, purchaseOrderItems, purchaseOrders, salesOrderItems, salesOrders, supplierInvoiceItems, supplierInvoices, suppliers } from "@db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
+import { nextSequentialCode } from "../queries/master-code";
 
 export const masterRouter = createRouter({
   customers: protectedProcedure.query(async () => getDb().select().from(customers).orderBy(desc(customers.id))),
   createCustomer: protectedProcedure.input(z.object({ name: z.string().min(1), phone: z.string().optional(), address: z.string().optional(), termDays: z.number().int().min(0).max(365).default(30) })).mutation(async ({ input }) => {
     const db = getDb();
-    const count = await db.select({ id: customers.id }).from(customers);
-    const code = `C${String(count.length + 1).padStart(3, "0")}`;
-    const [row] = await db.insert(customers).values({ code, ...input }).returning({ id: customers.id });
-    return row;
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(1, hashtext('jena:customers-code'))`);
+      const rows = await tx.select({ code: customers.code }).from(customers);
+      const code = nextSequentialCode("C", rows.map((row) => row.code));
+      const [row] = await tx.insert(customers).values({ code, ...input }).returning({ id: customers.id });
+      return row;
+    });
   }),
   updateCustomer: protectedProcedure.input(z.object({ id: z.number(), name: z.string().min(1), phone: z.string().optional(), address: z.string().optional(), termDays: z.number().int().min(0).max(365) })).mutation(async ({ input }) => {
     const { id, ...data } = input;
@@ -31,10 +35,13 @@ export const masterRouter = createRouter({
   suppliers: protectedProcedure.query(async () => getDb().select().from(suppliers).orderBy(desc(suppliers.id))),
   createSupplier: protectedProcedure.input(z.object({ name: z.string().min(1), phone: z.string().optional() })).mutation(async ({ input }) => {
     const db = getDb();
-    const count = await db.select({ id: suppliers.id }).from(suppliers);
-    const code = `S${String(count.length + 1).padStart(3, "0")}`;
-    const [row] = await db.insert(suppliers).values({ code, ...input }).returning({ id: suppliers.id });
-    return row;
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(1, hashtext('jena:suppliers-code'))`);
+      const rows = await tx.select({ code: suppliers.code }).from(suppliers);
+      const code = nextSequentialCode("S", rows.map((row) => row.code));
+      const [row] = await tx.insert(suppliers).values({ code, ...input }).returning({ id: suppliers.id });
+      return row;
+    });
   }),
   updateSupplier: protectedProcedure.input(z.object({ id: z.number(), name: z.string().min(1), phone: z.string().optional() })).mutation(async ({ input }) => {
     const { id, ...data } = input;
@@ -53,10 +60,13 @@ export const masterRouter = createRouter({
   products: protectedProcedure.query(async () => getDb().select().from(products).orderBy(desc(products.id))),
   createProduct: protectedProcedure.input(z.object({ name: z.string().min(1), unit: z.string().min(1), basePrice: z.number().int().min(0), taxable: z.boolean().default(true) })).mutation(async ({ input }) => {
     const db = getDb();
-    const count = await db.select({ id: products.id }).from(products);
-    const sku = `SKU-${String(count.length + 1).padStart(3, "0")}`;
-    const [row] = await db.insert(products).values({ sku, ...input }).returning({ id: products.id });
-    return row;
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(1, hashtext('jena:products-sku'))`);
+      const rows = await tx.select({ sku: products.sku }).from(products);
+      const sku = nextSequentialCode("SKU-", rows.map((row) => row.sku));
+      const [row] = await tx.insert(products).values({ sku, ...input }).returning({ id: products.id });
+      return row;
+    });
   }),
   updateProduct: protectedProcedure.input(z.object({ id: z.number(), name: z.string().min(1), unit: z.string().min(1), basePrice: z.number().int().min(0), taxable: z.boolean() })).mutation(async ({ input }) => {
     const { id, ...data } = input;
