@@ -1,7 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
-import { getSafeCauseMetadata } from "./error-metadata";
+import { classifyCauseCategory, getSafeCauseMetadata } from "./error-metadata";
 
 const INTERNAL_ERROR_MESSAGE = "Terjadi gangguan sementara pada server. Data belum berhasil dimuat. Silakan coba lagi.";
 
@@ -12,6 +12,7 @@ const t = initTRPC.context<TrpcContext>().create({
       console.error("trpc procedure failed", {
         path: shape.data?.path,
         code: error.code,
+        category: classifyCauseCategory(error),
         cause: getSafeCauseMetadata(error),
       });
       return { ...shape, message: INTERNAL_ERROR_MESSAGE };
