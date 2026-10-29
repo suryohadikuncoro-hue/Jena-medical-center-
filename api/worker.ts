@@ -44,7 +44,6 @@ app.onError((error, c) => {
     method: c.req.method,
     path: new URL(c.req.url).pathname,
     errorName: error instanceof Error ? error.name : "UnknownError",
-    errorMessage: error instanceof Error ? error.message : String(error),
   }));
   return c.json({ error: "Internal Server Error", requestId }, 500);
 });
