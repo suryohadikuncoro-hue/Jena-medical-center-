@@ -4,25 +4,27 @@ type ChartRow = { label: string; left: number; right: number };
 
 function ChartDataTable({ caption, leftLabel, rightLabel, rows }: { caption: string; leftLabel: string; rightLabel: string; rows: ChartRow[] }) {
   return (
-    <table className="sr-only">
-      <caption>{caption}</caption>
-      <thead>
-        <tr>
-          <th scope="col">Periode</th>
-          <th scope="col">{leftLabel}</th>
-          <th scope="col">{rightLabel}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, i) => (
-          <tr key={`${row.label}-${i}`}>
-            <th scope="row">{row.label}</th>
-            <td>{rp(row.left)}</td>
-            <td>{rp(row.right)}</td>
+    <div className="sr-only">
+      <table>
+        <caption>{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Periode</th>
+            <th scope="col">{leftLabel}</th>
+            <th scope="col">{rightLabel}</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={`${row.label}-${i}`}>
+              <th scope="row">{row.label}</th>
+              <td>{rp(row.left)}</td>
+              <td>{rp(row.right)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
