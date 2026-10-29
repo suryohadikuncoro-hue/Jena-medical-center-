@@ -10,7 +10,7 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent showCloseButton={false} className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-none border-[var(--line-strong)] bg-[var(--paper)] p-0">
+      <DialogContent showCloseButton={false} className="max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-0 sm:w-full">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--line-strong)] bg-[var(--paper)] px-4 py-3">
           <DialogTitle className="font-display text-lg font-semibold">{title}</DialogTitle>
           <DialogClose asChild>
@@ -298,26 +298,36 @@ export default function PesananDetail() {
             </div>
           </div>
           <div className="label-caps mt-4">Barang sesuai faktur</div>
-          <div className="mt-2 grid grid-cols-[minmax(0,1fr)_42px_74px_42px_42px] gap-1 text-[8px] font-semibold uppercase tracking-wide text-[var(--ink-soft)] sm:grid-cols-[minmax(0,1fr)_58px_94px_62px_62px] sm:gap-2 sm:text-[10px]">
+          <div className="mt-2 hidden grid-cols-[minmax(0,1fr)_58px_94px_62px_62px] gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-soft)] sm:grid">
             <span className="min-w-0 truncate">Barang</span><span>Qty</span><span className="truncate">Harga modal</span><span>Diskon %</span><span>PPN %</span>
           </div>
-          <div className="mt-1 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+          <div className="mt-2 space-y-2 sm:divide-y sm:divide-[var(--line)] sm:space-y-0 sm:border-y sm:border-[var(--line)]">
             {d.pos.find((p) => p.id === fakModal)?.items.map((it) => {
               const v = fakItems[it.productId] ?? { qty: it.qty, unitCost: it.unitCost, discountPercent: 0, ppnPercent: 0 };
               const name = d.items.find((x) => x.productId === it.productId)?.productName ?? "Barang";
               return (
-                <div key={it.productId} className="grid grid-cols-[minmax(0,1fr)_42px_74px_42px_42px] items-center gap-1 py-2 sm:grid-cols-[minmax(0,1fr)_58px_94px_62px_62px] sm:gap-2">
-                  <span className="min-w-0 truncate text-sm" title={name}>{name}</span>
-                  <input aria-label={`${name}: jumlah`} className="input min-w-0 !min-h-[44px] px-1 text-sm sm:px-2" type="number" min={0} value={v.qty}
-                    onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, qty: Math.max(0, Number(e.target.value) || 0) } })} />
-                  <input aria-label={`${name}: harga modal per unit`} className="input min-w-0 !min-h-[44px] px-1 text-sm sm:px-2" type="number" min={0} value={v.unitCost}
-                    onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, unitCost: Math.max(0, Number(e.target.value) || 0) } })} />
-                  <input aria-label={`${name}: diskon persen`} className="input min-w-0 !min-h-[44px] px-1 text-sm sm:px-2" type="number" min={0} max={100} value={v.discountPercent}
-                    title="Diskon %" placeholder="Diskon %"
-                    onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
-                  <input aria-label={`${name}: PPN persen`} className="input min-w-0 !min-h-[44px] px-1 text-sm sm:px-2" type="number" min={0} max={100} value={v.ppnPercent}
-                    title="PPN %" placeholder="PPN %"
-                    onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, ppnPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
+                <div key={it.productId} className="grid grid-cols-2 items-center gap-2 rounded-xl border border-[var(--line)] bg-white p-3 sm:grid-cols-[minmax(0,1fr)_58px_94px_62px_62px] sm:gap-2 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:py-2">
+                  <span className="col-span-2 min-w-0 break-words text-sm font-semibold sm:col-span-1 sm:truncate" title={name}>{name}</span>
+                  <label className="flex min-w-0 flex-col gap-1 text-[0.65rem] font-medium text-[var(--ink-soft)] sm:contents">
+                    <span className="sm:hidden">Qty</span>
+                    <input aria-label={`${name}: jumlah`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} value={v.qty}
+                      onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, qty: Math.max(0, Number(e.target.value) || 0) } })} />
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1 text-[0.65rem] font-medium text-[var(--ink-soft)] sm:contents">
+                    <span className="sm:hidden">Harga modal</span>
+                    <input aria-label={`${name}: harga modal per unit`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} value={v.unitCost}
+                      onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, unitCost: Math.max(0, Number(e.target.value) || 0) } })} />
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1 text-[0.65rem] font-medium text-[var(--ink-soft)] sm:contents">
+                    <span className="sm:hidden">Diskon %</span>
+                    <input aria-label={`${name}: diskon persen`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} max={100} value={v.discountPercent}
+                      title="Diskon %" onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1 text-[0.65rem] font-medium text-[var(--ink-soft)] sm:contents">
+                    <span className="sm:hidden">PPN %</span>
+                    <input aria-label={`${name}: PPN persen`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} max={100} value={v.ppnPercent}
+                      title="PPN %" onChange={(e) => setFakItems({ ...fakItems, [it.productId]: { ...v, ppnPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
+                  </label>
                 </div>
               );
             })}

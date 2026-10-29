@@ -26,7 +26,7 @@ export default function Faktur() {
                       <span className="font-display text-base font-semibold">Faktur {f.number}</span>
                       <StatusBadge status={f.status} />
                       {!f.taxInvoiceComplete && f.status !== "draft" && (
-                        <span className="badge text-[var(--warn)]">Pajak belum lengkap</span>
+                        <span className="badge bg-[#fff3d6] text-[var(--warn)]">Pajak belum lengkap</span>
                       )}
                     </div>
                     <div className="mt-1 text-sm text-[var(--ink-soft)]">
@@ -42,7 +42,7 @@ export default function Faktur() {
                   <span className="text-[var(--ink-soft)]">Hitungan sistem: {rp(f.computedTotal)}</span>
                   {f.selisih !== 0 && (
                     <span className="inline-flex items-center gap-1 font-semibold text-[var(--bad)]">
-                      <AlertTriangle size={12} /> Selisih {rp(Math.abs(f.selisih))}
+                      <AlertTriangle size={12} /> Tercetak {f.selisih > 0 ? "lebih tinggi" : "lebih rendah"} {rp(Math.abs(f.selisih))}
                     </span>
                   )}
                   {f.status !== "draft" && f.remaining > 0 && <span className="text-[var(--ink-soft)]">Sisa hutang {rp(f.remaining)}</span>}

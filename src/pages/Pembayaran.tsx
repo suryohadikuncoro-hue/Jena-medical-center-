@@ -34,6 +34,10 @@ export default function Pembayaran() {
   if (list.isLoading) return <Loading />;
   if (list.error || !list.data) return <LoadError message={list.error?.message} retry={() => list.refetch()} />;
 
+  const selectedRemaining = direction === "in"
+    ? open.data?.invoices.find((invoice) => invoice.id === invoiceId)?.remaining
+    : open.data?.supplierInvoices.find((invoice) => invoice.id === fakturId)?.remaining;
+
   const submit = () => {
     setError(null);
     if (amount <= 0) return setError("Isi jumlah pembayaran.");
@@ -118,6 +122,11 @@ export default function Pembayaran() {
               </select>
             </div>
           </div>
+          {selectedRemaining !== undefined && (
+            <p className="mt-2 rounded-xl bg-[#eef0ff] px-3 py-2 text-xs text-[#3d4b93]" role="status">
+              Sisa tagihan yang dipilih: <strong className="tabular-nums">{rp(selectedRemaining)}</strong>
+            </p>
+          )}
           <label className="label-caps mt-3 block" htmlFor="payment-note">Catatan (opsional)</label>
           <input id="payment-note" className="input mt-1" placeholder="Catatan (opsional)" value={note} onChange={(e) => setNote(e.target.value)} />
           {error && <p className="mt-2 text-sm font-medium text-[var(--bad)]" role="alert">{error}</p>}
