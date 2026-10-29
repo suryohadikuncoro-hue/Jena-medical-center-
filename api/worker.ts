@@ -15,6 +15,40 @@ type WorkerEnv = {
 
 const app = new Hono<{ Bindings: WorkerEnv }>();
 
+// Correlate each API request with a server-side log line without logging
+// request bodies, authorization headers, cookies, or customer data.
+app.use("/api/*", async (c, next) => {
+  const requestId = crypto.randomUUID();
+  const startedAt = Date.now();
+  c.header("X-Request-Id", requestId);
+
+  try {
+    await next();
+  } finally {
+    console.log(JSON.stringify({
+      event: "api_request",
+      requestId,
+      method: c.req.method,
+      path: new URL(c.req.url).pathname,
+      status: c.res.status,
+      durationMs: Date.now() - startedAt,
+    }));
+  }
+});
+
+app.onError((error, c) => {
+  const requestId = c.res.headers.get("X-Request-Id") ?? "unavailable";
+  console.error(JSON.stringify({
+    event: "api_unhandled_error",
+    requestId,
+    method: c.req.method,
+    path: new URL(c.req.url).pathname,
+    errorName: error instanceof Error ? error.name : "UnknownError",
+    errorMessage: error instanceof Error ? error.message : String(error),
+  }));
+  return c.json({ error: "Internal Server Error", requestId }, 500);
+});
+
 app.use("/api/*", async (c, next) => {
   configureRuntimeEnv({
     databaseUrl: c.env.HYPERDRIVE.connectionString,
