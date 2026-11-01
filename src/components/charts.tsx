@@ -5,7 +5,7 @@ type ChartRow = { label: string; left: number; right: number };
 function ChartDataTable({ caption, leftLabel, rightLabel, rows }: { caption: string; leftLabel: string; rightLabel: string; rows: ChartRow[] }) {
   return (
     <details className="mt-3 border-t border-[#edf0f4] pt-2">
-      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-[#08697b]">
+      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-[#5963a9]">
         Lihat rincian angka
         <span className="font-normal text-[#667085]">{rows.length} periode</span>
       </summary>
