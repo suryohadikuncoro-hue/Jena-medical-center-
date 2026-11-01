@@ -15,7 +15,9 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "worker:validate": "node scripts/cloudflare-worker.mjs validate",
+    "worker:deploy": "node scripts/cloudflare-worker.mjs deploy"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "2.0.78",
