@@ -61,11 +61,25 @@ if (configuredName !== expectedName) {
 
 console.log(`Worker name validated: ${configuredName}`);
 
+function quoteArg(arg) {
+  return /[\s"]/.test(arg) ? `"${arg.replace(/"/g, '\\"')}"` : arg;
+}
+
 function run(command, args) {
-  const result = spawnSync(command, args, {
-    stdio: "inherit",
-    env: process.env,
-  });
+  // On Windows pnpm is pnpm.cmd, which Node cannot spawn without a shell
+  // (spawnSync("pnpm", ...) fails with ENOENT). Elsewhere spawn directly so
+  // arguments are passed through without shell quoting.
+  const useShell = process.platform === "win32";
+  const result = useShell
+    ? spawnSync(`${command} ${args.map(quoteArg).join(" ")}`, {
+        stdio: "inherit",
+        env: process.env,
+        shell: true,
+      })
+    : spawnSync(command, args, {
+        stdio: "inherit",
+        env: process.env,
+      });
   if (result.error) {
     console.error(`Could not start ${command}: ${result.error.message}`);
     process.exit(1);
