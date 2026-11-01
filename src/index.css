@@ -6,40 +6,40 @@
 
 @layer base {
   :root {
-    /* Cool clinical palette: calm canvas, high-contrast ink, restrained indigo/teal accents. */
-    --paper: #f4f6fa;
-    --paper-2: #e9edf5;
-    --ink: #20283a;
-    --ink-soft: #667085;
-    --slate: #5966b5;
-    --slate-deep: #3d4b93;
-    --slate-hover: #e7eaff;
-    --line: #e6e9f0;
-    --line-strong: #d5dae5;
-    --warn: #9a6700;
-    --bad: #a33f55;
-    --ok: #2f7568;
+    /* Clinical identity: clean cool surfaces, medical blue-teal actions, mint success, coral alerts. */
+    --paper: #f4f8fa;
+    --paper-2: #e9f2f4;
+    --ink: #163447;
+    --ink-soft: #617582;
+    --slate: #087d91;
+    --slate-deep: #075766;
+    --slate-hover: #d9eef2;
+    --line: #e0eaee;
+    --line-strong: #c7d9df;
+    --warn: #90651b;
+    --bad: #b64d5b;
+    --ok: #27816f;
 
-    --background: 220 24% 98%;
-    --foreground: 224 28% 18%;
+    --background: 195 35% 98%;
+    --foreground: 203 44% 18%;
     --card: 0 0% 100%;
-    --card-foreground: 224 28% 18%;
+    --card-foreground: 203 44% 18%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 28% 18%;
-    --primary: 233 39% 53%;
+    --popover-foreground: 203 44% 18%;
+    --primary: 189 90% 29%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 20% 94%;
-    --secondary-foreground: 224 28% 18%;
-    --muted: 220 20% 95%;
-    --muted-foreground: 220 10% 43%;
-    --accent: 230 65% 96%;
-    --accent-foreground: 233 39% 40%;
-    --destructive: 347 45% 45%;
+    --secondary: 193 28% 93%;
+    --secondary-foreground: 203 44% 18%;
+    --muted: 194 27% 95%;
+    --muted-foreground: 200 13% 45%;
+    --accent: 190 50% 92%;
+    --accent-foreground: 189 90% 24%;
+    --destructive: 354 45% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 18% 90%;
-    --input: 220 18% 90%;
-    --ring: 233 39% 53%;
-    --radius: 0.75rem;
+    --border: 194 24% 89%;
+    --input: 194 24% 89%;
+    --ring: 189 90% 29%;
+    --radius: 0.875rem;
   }
 
   html {
@@ -114,15 +114,15 @@
     padding: 0 1rem;
     font-size: 0.875rem;
     font-weight: 600;
-    border: 1px solid var(--ink);
+    border: 1px solid var(--slate);
     border-radius: 0.75rem;
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--slate);
+    color: #fff;
     cursor: pointer;
     transition: background-color 180ms ease-out, color 180ms ease-out, border-color 180ms ease-out;
   }
-  .btn:hover { background: #303b54; }
-  .btn:active { background: #182131; }
+  .btn:hover { background: var(--slate-deep); }
+  .btn:active { background: #064957; }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   .btn-accent {
@@ -131,7 +131,7 @@
     color: #fff;
   }
   .btn-accent:hover { background: var(--slate-deep); }
-  .btn-accent:active { background: #303d80; }
+  .btn-accent:active { background: #064957; }
 
   .btn-ghost {
     background: transparent;
@@ -139,7 +139,7 @@
     border-color: var(--line-strong);
   }
   .btn-ghost:hover { background: var(--paper-2); }
-  .btn-ghost:active { background: #cdc8be; }
+  .btn-ghost:active { background: var(--paper-2); }
 
   .input, .select {
     width: 100%;
@@ -152,8 +152,8 @@
     color: var(--ink);
     transition: border-color 150ms ease-out;
   }
-  .input:focus, .select:focus { border-color: var(--slate); outline: none; box-shadow: 0 0 0 3px rgb(89 102 181 / 14%); }
-  .input::placeholder { color: #8a857a; }
+  .input:focus, .select:focus { border-color: var(--slate); outline: none; box-shadow: 0 0 0 3px rgb(8 125 145 / 14%); }
+  .input::placeholder { color: #82939b; }
 
   /* staggered entrance */
   .rise {

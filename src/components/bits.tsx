@@ -31,12 +31,12 @@ export function StatusBadge({ status }: { status: string }) {
     draft: { label: "Draf", cls: "bg-[#f2f4f7] text-[#475467]" },
     ordered: { label: "Menunggu supplier", cls: "bg-[#fff3d6] text-[#8a5b00]" },
     sent: { label: "Terkirim", cls: "bg-[#fff3d6] text-[#8a5b00]" },
-    confirmed: { label: "Terkonfirmasi", cls: "bg-[#eef0ff] text-[#4e5fa8]" },
+    confirmed: { label: "Terkonfirmasi", cls: "bg-[#e5f3f6] text-[#08748a]" },
     closed: { label: "Selesai", cls: "bg-[#e8f6f2] text-[#2f7568]" },
-    issued: { label: "Terbit", cls: "bg-[#eef0ff] text-[#4e5fa8]" },
+    issued: { label: "Terbit", cls: "bg-[#e5f3f6] text-[#08748a]" },
     partial: { label: "Sebagian", cls: "bg-[#fff3d6] text-[#8a5b00]" },
     paid: { label: "Lunas", cls: "bg-[#e8f6f2] text-[#2f7568]" },
-    posted: { label: "Dibukukan", cls: "bg-[#eef0ff] text-[#4e5fa8]" },
+    posted: { label: "Dibukukan", cls: "bg-[#e5f3f6] text-[#08748a]" },
   };
   const s = map[status] ?? { label: status, cls: "bg-[#f2f4f7] text-[var(--ink)]" };
   return <span className={`badge ${s.cls}`}>{s.label}</span>;

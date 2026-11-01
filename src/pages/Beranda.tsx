@@ -32,7 +32,7 @@ type StatCardProps = {
 };
 
 const toneStyles: Record<Tone, { icon: string; badge: string }> = {
-  violet: { icon: "bg-[#eef0ff] text-[#5966b5]", badge: "bg-[#f1f2ff] text-[#5963a9]" },
+  violet: { icon: "bg-[#e5f3f6] text-[#087d91]", badge: "bg-[#e8f5f7] text-[#08697b]" },
   mint: { icon: "bg-[#e8f6f2] text-[#2f7568]", badge: "bg-[#eff8f5] text-[#2f7568]" },
   rose: { icon: "bg-[#fff0f3] text-[#a14c66]", badge: "bg-[#fff3f5] text-[#a14c66]" },
 };
@@ -161,7 +161,7 @@ export default function Beranda() {
       <div className="mx-auto w-full min-w-0 max-w-6xl space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#5966b5]">
+            <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#087d91]">
               <span className="inline-block size-2 rounded-full bg-[#83b9ac]" aria-hidden="true" />
               Jena Medical Center
               <span className="text-[#b1b7c4]">/</span>
@@ -174,7 +174,7 @@ export default function Beranda() {
           </div>
           <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
             <div className="flex min-h-11 flex-1 items-center gap-2 rounded-xl border border-[#e2e6ee] bg-white px-3 text-xs font-medium text-[#687184] sm:flex-none">
-              <CalendarDays size={15} className="text-[#5966b5]" aria-hidden="true" />
+              <CalendarDays size={15} className="text-[#087d91]" aria-hidden="true" />
               <span>{tanggalPanjang(new Date())}</span>
             </div>
             <Link to="/pesanan/baru" className="btn min-h-11 flex-1 rounded-xl border-[#20283a] bg-[#20283a] px-4 text-white hover:bg-[#303b54] sm:flex-none">
@@ -192,11 +192,11 @@ export default function Beranda() {
           <Surface className="min-w-0 overflow-hidden">
             <div className="flex flex-wrap items-start justify-between gap-3 px-4 pb-1 pt-5 sm:px-5">
               <div>
-                <p className="label-caps text-[#5966b5]">Aktivitas</p>
+                <p className="label-caps text-[#087d91]">Aktivitas</p>
                 <h2 className="mt-1 font-display text-lg font-semibold text-[#252d3f]">Pesanan & penagihan</h2>
                 <p className="mt-1 text-xs text-[#667085]">Nilai harian selama tujuh hari terakhir</p>
               </div>
-              <span className="rounded-full bg-[#f1f2ff] px-3 py-1.5 text-[0.68rem] font-semibold text-[#5963a9]">7 hari terakhir</span>
+              <span className="rounded-full bg-[#e8f5f7] px-3 py-1.5 text-[0.68rem] font-semibold text-[#08697b]">7 hari terakhir</span>
             </div>
             <div className="px-4 pb-5 pt-3 sm:px-5">
               <DualBars data={d.days} height={190} />
@@ -234,7 +234,7 @@ export default function Beranda() {
                           <h3 className="truncate text-sm font-semibold text-[#30394a]">{item.title}</h3>
                           {item.date && <p className="mt-1 text-xs text-[#667085]">Jatuh tempo {tanggal(item.date)}</p>}
                         </div>
-                        <ArrowUpRight size={16} className="mt-0.5 shrink-0 text-[#a0a7b5] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#5966b5]" aria-hidden="true" />
+                        <ArrowUpRight size={16} className="mt-0.5 shrink-0 text-[#a0a7b5] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#087d91]" aria-hidden="true" />
                       </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-1">
                         {item.lines.map((line, j) => (
@@ -254,10 +254,10 @@ export default function Beranda() {
         <section aria-labelledby="quick-actions-heading">
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
-              <p className="label-caps text-[#5966b5]">Aksi cepat</p>
+              <p className="label-caps text-[#087d91]">Aksi cepat</p>
               <h2 id="quick-actions-heading" className="mt-1 font-display text-lg font-semibold text-[#252d3f]">Lanjutkan pekerjaan</h2>
             </div>
-            <Link to="/pesanan" className="hidden items-center gap-1 text-xs font-semibold text-[#5963a9] hover:text-[#3d4b93] sm:flex">
+            <Link to="/pesanan" className="hidden items-center gap-1 text-xs font-semibold text-[#08697b] hover:text-[#075766] sm:flex">
               Semua pesanan <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </div>
@@ -269,7 +269,7 @@ export default function Beranda() {
                   <span className="block text-sm font-semibold text-[#30394a]">{label}</span>
                   <span className="mt-1 block text-xs leading-relaxed text-[#667085]">{detail}</span>
                 </span>
-                <ArrowRight size={16} className="shrink-0 text-[#a0a7b5] transition group-hover:translate-x-0.5 group-hover:text-[#5966b5]" aria-hidden="true" />
+                <ArrowRight size={16} className="shrink-0 text-[#a0a7b5] transition group-hover:translate-x-0.5 group-hover:text-[#087d91]" aria-hidden="true" />
               </Link>
             ))}
           </div>
@@ -283,7 +283,7 @@ export default function Beranda() {
                 <h2 className="mt-1 font-display text-lg font-semibold text-[#252d3f]">Ikhtisar pembukuan</h2>
                 <p className="mt-1 text-xs text-[#667085]">Angka bulan berjalan</p>
               </div>
-              <Link to="/laporan" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[#5963a9] transition hover:bg-[#f1f2ff]">
+              <Link to="/laporan" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[#08697b] transition hover:bg-[#e8f5f7]">
                 Buka laporan <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
@@ -301,7 +301,7 @@ export default function Beranda() {
 
           <Surface className="min-w-0 overflow-hidden">
             <div className="px-4 pb-4 pt-5 sm:px-5">
-              <p className="label-caps text-[#5966b5]">Status dokumen</p>
+              <p className="label-caps text-[#087d91]">Status dokumen</p>
               <h2 className="mt-1 font-display text-lg font-semibold text-[#252d3f]">Tagihan & draf</h2>
               <p className="mt-1 text-xs text-[#667085]">Ringkasan dokumen operasional</p>
             </div>
@@ -315,12 +315,12 @@ export default function Beranda() {
                 <p className="text-xs font-medium text-[#687184]">Belum ditagih</p>
                 <p className="mt-2 break-words font-display text-sm font-semibold text-[#252d3f] tabular-nums sm:text-base" title={rp(d.belumDitagih)}>{rp(d.belumDitagih)}</p>
                 <p className="mt-1 text-[0.65rem] leading-relaxed text-[#667085]">Siap ditagih: {d.siapDitagihCount} pesanan</p>
-                {d.siapDitagihCount > 0 && <Link to="/pesanan?status=confirmed" className="mt-2 inline-flex min-h-8 items-center gap-1 text-xs font-semibold text-[#5963a9] underline underline-offset-2">Buat invoice <ArrowRight size={13} aria-hidden="true" /></Link>}
+                {d.siapDitagihCount > 0 && <Link to="/pesanan?status=confirmed" className="mt-2 inline-flex min-h-8 items-center gap-1 text-xs font-semibold text-[#08697b] underline underline-offset-2">Buat invoice <ArrowRight size={13} aria-hidden="true" /></Link>}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 px-4 pb-4 sm:px-5">
               <div className="flex items-start gap-2 rounded-xl border border-[#edf0f4] p-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#eef0ff] text-[#5966b5]"><FileText size={16} aria-hidden="true" /></span>
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#e5f3f6] text-[#087d91]"><FileText size={16} aria-hidden="true" /></span>
                 <div className="min-w-0"><p className="text-xs text-[#667085]">Draf invoice</p><p className="mt-0.5 text-sm font-semibold text-[#30394a]">{d.dokumenBelumDibukukan.drafInvoice} · {rpShort(d.dokumenBelumDibukukan.nilaiDrafInvoice)}</p></div>
               </div>
               <div className="flex items-start gap-2 rounded-xl border border-[#edf0f4] p-3">
