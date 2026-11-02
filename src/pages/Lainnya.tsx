@@ -3,27 +3,27 @@ import { Users, Truck, Package, ArrowRight } from "lucide-react";
 import { PageHeader, Section } from "@/components/bits";
 
 const MENU = [
-  { to: "/pelanggan", label: "Pelanggan", desc: "Kontak, termin pembayaran, alamat", icon: Users },
-  { to: "/supplier", label: "Supplier", desc: "Kontak pemasok barang medis", icon: Truck },
-  { to: "/barang", label: "Barang dan harga", desc: "Harga jual, modal terakhir, HPP rata-rata, stok", icon: Package },
+  { to: "/pelanggan", label: "Pelanggan", desc: "Kontak, termin pembayaran, alamat", icon: Users, tone: "bg-[#e6f2fc] text-[var(--slate)]" },
+  { to: "/supplier", label: "Supplier", desc: "Kontak pemasok barang medis", icon: Truck, tone: "bg-[var(--warn-bg)] text-[var(--warn)]" },
+  { to: "/barang", label: "Barang dan harga", desc: "Harga jual, modal terakhir, HPP rata-rata, stok", icon: Package, tone: "bg-[var(--ok-bg)] text-[var(--ok)]" },
 ];
 
 export default function Lainnya() {
   return (
     <div>
-        <PageHeader title="Master Data" sub="Kelola data dasar pelanggan, supplier, dan barang" />
+      <PageHeader title="Master Data" sub="Kelola data dasar pelanggan, supplier, dan barang" />
       <Section>
-        <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
+        <div className="divide-y divide-[var(--line)]">
           {MENU.map((m) => (
-            <Link key={m.to} to={m.to} className="flex items-center justify-between gap-4 px-4 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)] md:px-8">
-              <div className="flex items-center gap-4">
-                <m.icon size={20} strokeWidth={1.5} className="text-[var(--slate-deep)]" />
-                <div>
-                  <div className="text-sm font-semibold">{m.label}</div>
-                  <div className="text-xs text-[var(--ink-soft)]">{m.desc}</div>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-[var(--ink-soft)]" />
+            <Link key={m.to} to={m.to} className="group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--slate-hover)]/40 md:px-5">
+              <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${m.tone}`} aria-hidden="true">
+                <m.icon size={18} strokeWidth={2} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-[var(--ink)]">{m.label}</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-[var(--ink-soft)]">{m.desc}</span>
+              </span>
+              <ArrowRight size={16} className="shrink-0 text-[var(--ink-soft)]/60 transition group-hover:translate-x-0.5 group-hover:text-[var(--slate)]" aria-hidden="true" />
             </Link>
           ))}
         </div>

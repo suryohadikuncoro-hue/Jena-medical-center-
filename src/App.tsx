@@ -11,6 +11,7 @@ import Faktur from './pages/Faktur'
 import Laporan from './pages/Laporan'
 import Lainnya from './pages/Lainnya'
 import Pelanggan from './pages/Pelanggan'
+import PelangganDetail from './pages/PelangganDetail'
 import Supplier from './pages/Supplier'
 import Barang from './pages/Barang'
 
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/laporan" element={<Laporan />} />
         <Route path="/lainnya" element={<Lainnya />} />
         <Route path="/pelanggan" element={<Pelanggan />} />
+        <Route path="/pelanggan/:id" element={<PelangganDetail />} />
         <Route path="/supplier" element={<Supplier />} />
         <Route path="/barang" element={<Barang />} />
         <Route path="*" element={<NotFound />} />

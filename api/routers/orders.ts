@@ -41,6 +41,7 @@ export const ordersRouter = createRouter({
         number: salesOrders.number,
         orderDate: salesOrders.orderDate,
         status: salesOrders.status,
+        customerId: customers.id,
         customerName: customers.name,
         termDays: customers.termDays,
       })

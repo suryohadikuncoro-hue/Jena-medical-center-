@@ -83,7 +83,7 @@ export default function PesananBaru() {
       <PageHeader title={editId ? "Edit pesanan" : "Pesanan baru"} sub="Buat atau sesuaikan pesanan pelanggan sebelum diproses" />
 
       <Section title="Pelanggan">
-        <div className="grid grid-cols-1 gap-3 px-4 pb-4 md:grid-cols-2 md:px-8">
+        <div className="grid grid-cols-1 gap-3 px-4 pb-4 md:grid-cols-2 md:px-5">
           <div>
             <label className="label-caps block" htmlFor="order-customer">Pelanggan</label>
             <select id="order-customer" className="select mt-1" value={customerId} onChange={(e) => { setCustomerId(Number(e.target.value) || ""); setRows((rs) => rs.map((r) => ({ ...r, productId: 0, unitPrice: 0, priceSource: "standar" }))); }}>
@@ -98,7 +98,7 @@ export default function PesananBaru() {
             <input id="order-date" className="input mt-1" type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
           </div>
         </div>
-        <div className="px-4 pb-4 md:px-8">
+        <div className="px-4 pb-4 md:px-5">
           <label className="label-caps block" htmlFor="order-note">Catatan (opsional)</label>
           <input id="order-note" className="input mt-1" placeholder="Catatan (opsional)" value={note} onChange={(e) => setNote(e.target.value)} />
           {customerId && customerPrices.isLoading && <p className="mt-2 text-sm text-[var(--ink-soft)]" role="status">Memuat harga khusus pelanggan…</p>}
@@ -112,7 +112,7 @@ export default function PesananBaru() {
       </Section>
 
       <Section title="Barang" note="Harga di bawah modal terakhir tetap bisa diproses, tapi marginnya minus">
-        <div className="border-b border-[var(--line)]">
+        <div>
           {rows.map((r, i) => {
             const p = r.productId ? prodMap.get(r.productId) : undefined;
             const qty = typeof r.qty === "number" ? r.qty : 0;
@@ -120,7 +120,7 @@ export default function PesananBaru() {
             const belowCost = p && r.unitPrice !== "" ? unitPrice < p.lastCost : false;
             const margin = p && unitPrice > 0 ? Math.round(((unitPrice - p.lastCost) / unitPrice) * 100) : 0;
             return (
-              <div key={`${r.productId}-${i}`} className="border-t border-[var(--line)] px-4 py-4 md:px-8">
+              <div key={`${r.productId}-${i}`} className="border-t border-[var(--line)] px-4 py-3.5 first:border-t-0 md:px-5">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_110px_160px_auto]">
                   <div className="min-w-0">
                     <label className="label-caps block" htmlFor={`order-product-${i}`}>Barang</label>
@@ -169,16 +169,16 @@ export default function PesananBaru() {
               </div>
             );
           })}
-          <div className="flex items-center justify-between px-4 py-4 md:px-8">
+          <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] px-4 py-4 md:px-5">
             <button
               className="btn btn-ghost"
               onClick={() => setRows((rs) => [...rs, { productId: 0, qty: 1, unitPrice: 0, priceSource: "standar" }])}
             >
-              <Plus size={16} /> Tambah barang
+              <Plus size={16} aria-hidden="true" /> Tambah barang
             </button>
             <div className="text-right">
               <div className="label-caps">Total pesanan</div>
-              <div className="font-display text-xl font-semibold">{rp(total)}</div>
+              <div className="font-display text-xl font-bold tabular-nums text-[var(--ink)]">{rp(total)}</div>
               <div className="text-xs text-[var(--ink-soft)]">Belum termasuk PPN</div>
             </div>
           </div>
@@ -214,8 +214,8 @@ function ProductPicker({ products, productId, inputId, disabled, onSelect }: { p
       {open && (
         <>
           <button className="fixed inset-0 z-10 h-full w-full cursor-default" aria-label="Tutup pencarian" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto border border-[var(--line-strong)] bg-[var(--paper)] shadow-lg">
-            {matches.length ? matches.map((p) => <button key={p.id} type="button" className="block w-full border-b border-[var(--line)] px-3 py-3 text-left text-sm hover:bg-[var(--paper-2)]" onClick={() => { setQuery(p.name); onSelect(p.id); setOpen(false); }}><span className="font-semibold">{p.name}</span><span className="ml-2 text-xs text-[var(--ink-soft)]">{p.sku} · stok {p.stockQty} {p.unit}</span></button>) : <div className="px-3 py-3 text-sm text-[var(--ink-soft)]">Barang tidak ditemukan.</div>}
+          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-xl border border-[var(--line-strong)] bg-white shadow-lg">
+            {matches.length ? matches.map((p) => <button key={p.id} type="button" className="block w-full border-b border-[var(--line)] px-3 py-3 text-left text-sm transition-colors last:border-b-0 hover:bg-[var(--slate-hover)]/50" onClick={() => { setQuery(p.name); onSelect(p.id); setOpen(false); }}><span className="font-semibold text-[var(--ink)]">{p.name}</span><span className="ml-2 text-xs text-[var(--ink-soft)]">{p.sku} · stok {p.stockQty} {p.unit}</span></button>) : <div className="px-3 py-3 text-sm text-[var(--ink-soft)]">Barang tidak ditemukan.</div>}
           </div>
         </>
       )}
