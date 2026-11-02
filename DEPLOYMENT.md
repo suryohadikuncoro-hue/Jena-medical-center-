@@ -201,7 +201,26 @@ Contoh arah script:
 }
 ```
 
-Sebelum deploy:
+## Preflight otomatis Cloudflare Worker
+
+Gunakan skrip repo agar build berhenti sebelum deploy jika nama di `wrangler.jsonc` tidak cocok dengan nama Worker tujuan. `worker:validate` menjalankan build aplikasi dan `wrangler deploy --dry-run` tanpa mengubah Worker. `worker:deploy` menjalankan pemeriksaan yang sama terlebih dahulu, lalu baru menjalankan deploy.
+
+Tetapkan variable non-rahasia `CF_EXPECTED_WORKER_NAME` pada environment Cloudflare Workers Builds ke **nama Worker persis seperti yang ditampilkan di dashboard Cloudflare**. Nama tersebut harus sama dengan `name` tingkat atas di `wrangler.jsonc`. Jika environment preview dan production terpisah, tetapkan variable di keduanya.
+
+Uji lokal tanpa deploy:
+
+```bash
+CF_EXPECTED_WORKER_NAME="<nama-worker-cloudflare>" pnpm run worker:validate
+```
+
+Konfigurasi perintah di Cloudflare Workers Builds:
+
+- **Build command:** `pnpm run worker:validate`
+- **Deploy command:** `pnpm run worker:deploy`
+
+Perintah deploy mengulang build dan dry-run sebagai pemeriksaan terakhir, kemudian deploy hanya jika semuanya lolos. Jika nama berbeda, skrip menampilkan kedua nilai dan berhenti tanpa mencoba deploy. Untuk memperbaiki mismatch, samakan `wrangler.jsonc` dengan nama Worker tujuan atau ubah/rename Worker yang dituju—jangan menebak nama.
+
+## Sebelum deploy:
 
 ```bash
 npm run typecheck

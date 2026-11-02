@@ -26,19 +26,19 @@ export default function ResetPassword({ session, onSuccess }: { session: AuthSes
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-16">
-      <form onSubmit={submit} className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Jena Medical</p>
-        <h1 className="mt-3 font-display text-3xl font-semibold text-slate-900">Buat password baru</h1>
-        <p className="mt-2 text-sm text-slate-500">Gunakan password baru ini untuk masuk ke aplikasi.</p>
-        <label className="mt-8 block text-sm font-medium text-slate-700">Password baru
-          <input className="input mt-2 w-full" type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
+    <main className="grid min-h-[100dvh] place-items-center bg-[var(--paper)] px-4 py-10 text-[var(--ink)]">
+      <form onSubmit={submit} className="card w-full max-w-md p-6 sm:p-8">
+        <p className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-[var(--slate)]">Jena Medical</p>
+        <h1 className="mt-3 font-display text-2xl font-bold tracking-tight text-[var(--ink)]">Buat password baru</h1>
+        <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-[var(--ink-soft)]">Gunakan password baru ini untuk masuk ke aplikasi.</p>
+        <label className="mt-6 block text-sm font-medium text-[var(--ink)]">Password baru
+          <input className="input mt-1.5 w-full" type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
         </label>
-        <label className="mt-4 block text-sm font-medium text-slate-700">Ulangi password
-          <input className="input mt-2 w-full" type="password" minLength={8} value={confirmation} onChange={(e) => setConfirmation(e.target.value)} required autoComplete="new-password" />
+        <label className="mt-4 block text-sm font-medium text-[var(--ink)]">Ulangi password
+          <input className="input mt-1.5 w-full" type="password" minLength={8} value={confirmation} onChange={(e) => setConfirmation(e.target.value)} required autoComplete="new-password" />
         </label>
-        {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-        <button className="btn mt-6 w-full justify-center" disabled={loading}>{loading ? "Menyimpan..." : "Simpan password"}</button>
+        {error && <p className="mt-4 rounded-xl bg-[var(--bad-bg)] px-3 py-2 text-sm text-[var(--bad)]" role="alert">{error}</p>}
+        <button className="btn mt-6 w-full justify-center" disabled={loading}>{loading ? "Menyimpan…" : "Simpan password"}</button>
       </form>
     </main>
   );

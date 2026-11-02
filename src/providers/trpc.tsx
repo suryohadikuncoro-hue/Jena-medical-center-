@@ -74,7 +74,7 @@ function ApiErrorNotice() {
     return () => window.removeEventListener("jena:api-error", onError);
   }, []);
   if (!message) return null;
-  return <div className="fixed bottom-20 left-4 right-4 z-50 rounded-lg bg-red-700 px-4 py-3 text-sm font-medium text-white shadow-lg md:left-auto md:right-6 md:max-w-md">{message}</div>;
+  return <div className="fixed bottom-20 left-4 right-4 z-50 rounded-xl bg-[var(--bad)] px-4 py-3 text-sm font-medium text-white shadow-lg md:left-auto md:right-6 md:max-w-md" role="alert">{message}</div>;
 }
 
 export function TRPCProvider({ children }: { children: ReactNode }) {
