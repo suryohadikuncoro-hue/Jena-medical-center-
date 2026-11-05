@@ -1,0 +1,140 @@
+name: Deploy production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "11.25.0"
+  API_BASE_URL: https://jena-medical-api.losazulgranosuryohk11.workers.dev
+  PAGES_PROJECT_NAME: jena-medical-center
+
+jobs:
+  validate:
+    name: Validate and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL || 'https://jena-medical-api.losazulgranosuryohk11.workers.dev' }}
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Automated tests
+        run: pnpm test -- --reporter=dot
+
+      - name: Build frontend and Worker bundle
+        run: pnpm build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-dist-${{ github.sha }}
+          path: dist/public
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy-worker:
+    name: Deploy Worker API
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy Worker
+        run: pnpm exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-pages:
+    name: Deploy Pages frontend
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Pages artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pages-dist-${{ github.sha }}
+          path: dist/public
+
+      - name: Deploy Pages
+        run: >-
+          npx wrangler@4 pages deploy dist/public
+          --project-name "$PAGES_PROJECT_NAME"
+          --branch main
+          --commit-hash "$GITHUB_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  production-smoke-check:
+    name: Production smoke check
+    needs:
+      - deploy-worker
+      - deploy-pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check Worker health
+        run: |
+          curl --fail --show-error --silent --retry 5 --retry-delay 5 \
+            "$API_BASE_URL/health"
+
+      - name: Check Pages availability
+        run: |
+          curl --fail --show-error --silent --retry 5 --retry-delay 5 \
+            "https://jena-medical-center.pages.dev/" \
+            | grep -q '<html'
