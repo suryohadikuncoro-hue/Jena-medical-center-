@@ -9,6 +9,8 @@
     /* Cool clinical palette: calm canvas, high-contrast ink, restrained indigo/teal accents. */
     --paper: #f4f6fa;
     --paper-2: #e9edf5;
+    --surface: #ffffff;
+    --surface-soft: #f8f9fc;
     --ink: #20283a;
     --ink-soft: #667085;
     --slate: #5966b5;
