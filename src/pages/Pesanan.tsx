@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from "react-router";
+import { Pencil, Trash2 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { rp, tanggal } from "@/lib/format";
 import { PageHeader, Section, StatusBadge, Loading, LoadError, Empty } from "@/components/bits";
@@ -14,7 +15,14 @@ const FILTERS = [
 export default function Pesanan() {
   const [params, setParams] = useSearchParams();
   const status = params.get("status") ?? "all";
+  const utils = trpc.useUtils();
   const q = trpc.orders.list.useQuery(undefined, { refetchOnMount: "always" });
+  const deleteDraft = trpc.orders.deleteDraft.useMutation({
+    onSuccess: async () => {
+      await q.refetch();
+      await utils.reports.dashboard.invalidate();
+    },
+  });
 
   if (q.isLoading) return <Loading />;
   if (q.error || !q.data) return <LoadError message={q.error?.message} retry={() => q.refetch()} />;
@@ -47,38 +55,57 @@ export default function Pesanan() {
         ))}
       </div>
 
+      {deleteDraft.error && <p className="px-4 pb-3 text-sm text-[var(--bad)] md:px-8" role="alert">Pesanan gagal dihapus: {deleteDraft.error.message}</p>}
+
       <Section>
         {rows.length === 0 ? (
           <Empty text="Belum ada pesanan di status ini." action={<Link className="btn" to="/pesanan/baru">Buat pesanan</Link>} />
         ) : (
           <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
             {rows.map((o) => (
-              <Link
-                key={o.id}
-                to={`/pesanan/${o.id}`}
-                className="flex items-center justify-between gap-4 px-4 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)] md:px-8"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-display text-base font-semibold">{o.number}</span>
-                    <StatusBadge status={o.status} />
-                  </div>
-                  <div className="mt-1 truncate text-sm text-[var(--ink-soft)]">
-                    {o.customerName} · {tanggal(o.orderDate)} · termin {o.termDays} hari
-                  </div>
-                  {o.pendingSupplierCount > 0 && (
-                    <div className="mt-1 text-xs font-medium text-[var(--warn)]">
-                      {o.pendingSupplierCount} PO menunggu balasan supplier
+              <div key={o.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 transition-colors duration-200 hover:bg-[var(--paper-2)] md:px-8">
+                <Link to={`/pesanan/${o.id}`} className="flex min-w-0 flex-1 items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-display text-base font-semibold">{o.number}</span>
+                      <StatusBadge status={o.status} />
                     </div>
-                  )}
-                </div>
-                <div className="shrink-0 text-right">
-                  <div className="font-display text-base font-semibold">{rp(o.total)}</div>
-                  <div className="text-xs text-[var(--ink-soft)]">
-                    {o.invoiced > 0 ? `Ditagih ${rp(o.invoiced)}` : "Belum ditagih"}
+                    <div className="mt-1 truncate text-sm text-[var(--ink-soft)]">
+                      {o.customerName} · {tanggal(o.orderDate)} · termin {o.termDays} hari
+                    </div>
+                    {o.pendingSupplierCount > 0 && (
+                      <div className="mt-1 text-xs font-medium text-[var(--warn)]">
+                        {o.pendingSupplierCount} PO menunggu balasan supplier
+                      </div>
+                    )}
                   </div>
-                </div>
-              </Link>
+                  <div className="shrink-0 text-right">
+                    <div className="font-display text-base font-semibold">{rp(o.total)}</div>
+                    <div className="text-xs text-[var(--ink-soft)]">
+                      {o.invoiced > 0 ? `Ditagih ${rp(o.invoiced)}` : "Belum ditagih"}
+                    </div>
+                  </div>
+                </Link>
+                {o.status === "draft" && (
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Link to={`/pesanan/baru?edit=${o.id}`} className="btn btn-ghost !min-h-[44px] px-3 text-xs">
+                      <Pencil size={14} /> Edit
+                    </Link>
+                    <button
+                      type="button"
+                      className="btn btn-ghost !min-h-[44px] px-3 text-xs text-[var(--bad)]"
+                      disabled={deleteDraft.isPending}
+                      onClick={() => {
+                        if (confirm(`Hapus pesanan ${o.number}? Pesanan draf yang dihapus tidak dapat dipulihkan.`)) {
+                          deleteDraft.mutate({ id: o.id });
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} /> Hapus
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
