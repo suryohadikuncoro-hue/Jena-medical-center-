@@ -52,7 +52,6 @@ export default function PesananDetail() {
   const [poSupplier, setPoSupplier] = useState<number | "">("");
   const [poItems, setPoItems] = useState<Record<number, { qty: number; unitCost: number }>>({});
   const [fakNumber, setFakNumber] = useState("");
-  const [fakPrinted, setFakPrinted] = useState(0);
   const [fakDue, setFakDue] = useState("");
   const [fakTax, setFakTax] = useState(false);
   const [fakItems, setFakItems] = useState<Record<number, { qty: number; unitCost: number; discountPercent: number; ppnPercent: number }>>({});
@@ -74,13 +73,10 @@ export default function PesananDetail() {
     const po = d.pos.find((p) => p.id === poId);
     if (!po) return;
     const init: Record<number, { qty: number; unitCost: number; discountPercent: number; ppnPercent: number }> = {};
-    let total = 0;
     for (const it of po.items) {
       init[it.productId] = { qty: it.qty, unitCost: it.unitCost, discountPercent: 0, ppnPercent: 0 };
-      total += it.qty * it.unitCost;
     }
     setFakItems(init);
-    setFakPrinted(total);
     setFakNumber("");
     setFakDue("");
     setFakTax(false);
@@ -218,7 +214,7 @@ export default function PesananDetail() {
               <div className="text-sm font-semibold">Faktur supplier</div>
             </div>
             <p className="mt-1 pl-9 text-xs text-[var(--ink-soft)]">
-              Dicatat dari faktur cetak; sistem menghitung ulang dan menandai selisih.
+              Catat rincian barang, diskon, dan PPN faktur supplier.
             </p>
             <div className="mt-3 space-y-2 pl-9">
               {d.pos.map((p) => (
@@ -332,23 +328,19 @@ export default function PesananDetail() {
               );
             })}
           </div>
-          <div className="mt-4">
-            <label className="label-caps block" htmlFor="supplier-invoice-printed-total">Total tercetak di faktur</label>
-            <input id="supplier-invoice-printed-total" className="input mt-1" type="number" min={0} value={fakPrinted} onChange={(e) => setFakPrinted(Math.max(0, Number(e.target.value) || 0))} />
-            {(() => {
-              const computed = Object.values(fakItems).reduce((s, v) => {
-                const gross = v.qty * v.unitCost;
-                const net = gross - Math.round(gross * v.discountPercent / 100);
-                return s + net + Math.round(net * v.ppnPercent / 100);
-              }, 0);
-              const selisih = fakPrinted - computed;
-              return (
-                <p className={`mt-1 text-xs ${selisih !== 0 ? "font-semibold text-[var(--bad)]" : "text-[var(--ink-soft)]"}`}>
-                  Hitungan sistem {rp(computed)}{selisih !== 0 ? ` · selisih ${rp(Math.abs(selisih))} — periksa sebelum dibukukan` : ""}
-                </p>
-              );
-            })()}
-          </div>
+          {(() => {
+            const totals = Object.values(fakItems).reduce((sum, item) => {
+              const gross = item.qty * item.unitCost;
+              const net = gross - Math.round(gross * item.discountPercent / 100);
+              const ppn = Math.round(net * item.ppnPercent / 100);
+              return { net: sum.net + net, ppn: sum.ppn + ppn, total: sum.total + net + ppn };
+            }, { net: 0, ppn: 0, total: 0 });
+            return <div className="mt-4 space-y-2 rounded-lg bg-[var(--surface-soft)] p-3 text-sm">
+              <div className="flex justify-between"><span>DPP</span><b>{rp(totals.net)}</b></div>
+              <div className="flex justify-between"><span>Total PPN</span><b>{rp(totals.ppn)}</b></div>
+              <div className="flex justify-between border-t border-[var(--line)] pt-2"><span>Total</span><b>{rp(totals.total)}</b></div>
+            </div>;
+          })()}
           <label className="mt-4 flex min-h-[44px] items-center gap-3 text-sm">
             <input type="checkbox" className="h-5 w-5 accent-[var(--slate)]" checked={fakTax} onChange={(e) => setFakTax(e.target.checked)} />
             Faktur pajak masukan lengkap (PPN bisa dikreditkan)
@@ -362,7 +354,6 @@ export default function PesananDetail() {
                 number: fakNumber,
                 invoiceDate: todayLocal(),
                 dueDate: fakDue || undefined,
-                printedTotal: fakPrinted,
                 taxInvoiceComplete: fakTax,
                 items: Object.entries(fakItems)
                   .map(([pid, v]) => ({ productId: Number(pid), qty: v.qty, unitCost: v.unitCost, discountPercent: v.discountPercent, ppnPercent: v.ppnPercent }))
@@ -379,7 +370,7 @@ export default function PesananDetail() {
   );
 }
 
-function FakturRow({ faktur }: { faktur: { id: number; number: string; status: string; selisih: number } }) {
+function FakturRow({ faktur }: { faktur: { id: number; number: string; status: string } }) {
   const utils = trpc.useUtils();
   const postFaktur = trpc.orders.postSupplierInvoice.useMutation({
     onSuccess: () => { void utils.orders.detail.invalidate(); },
@@ -388,11 +379,6 @@ function FakturRow({ faktur }: { faktur: { id: number; number: string; status: s
     <div className="flex flex-wrap items-center justify-between gap-2 border border-[var(--line)] px-3 py-2">
       <div className="text-sm">
         <b>Faktur {faktur.number}</b> <StatusBadge status={faktur.status} />
-        {faktur.selisih !== 0 && (
-          <span className="ml-2 inline-flex items-center gap-1 text-xs font-semibold text-[var(--bad)]">
-            <AlertTriangle size={12} /> Selisih {rp(Math.abs(faktur.selisih))}
-          </span>
-        )}
       </div>
       {faktur.status === "draft" && (
         <button className="btn btn-accent !min-h-[44px] px-3 text-xs" disabled={postFaktur.isPending} onClick={() => postFaktur.mutate({ id: faktur.id })}>

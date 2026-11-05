@@ -155,12 +155,17 @@ export const ordersRouter = createRouter({
         items: poItems.filter((pi) => pi.poId === p.id),
         faktur: allFaktur.filter((f) => f.poId === p.id).map((f) => {
           const items = allFakturItems.filter((item) => item.invoiceId === f.id);
-          const computedTotal = items.reduce((sum, item) => {
+          const totalAfterDiscount = items.reduce((sum, item) => {
             const gross = item.qty * item.unitCost;
             const net = gross - Math.round(gross * item.discountPercent / 100);
-            return sum + net + Math.round(net * item.ppnPercent / 100);
+            return sum + net;
           }, 0);
-          return { ...f, computedTotal, selisih: f.printedTotal - computedTotal };
+          const totalPpn = items.reduce((sum, item) => {
+            const gross = item.qty * item.unitCost;
+            const net = gross - Math.round(gross * item.discountPercent / 100);
+            return sum + Math.round(net * item.ppnPercent / 100);
+          }, 0);
+          return { id: f.id, number: f.number, status: f.status, totalAfterDiscount, totalPpn, total: totalAfterDiscount + totalPpn };
         }),
       })),
       invoices: invs,
@@ -300,7 +305,6 @@ export const ordersRouter = createRouter({
         number: z.string().min(1),
         invoiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-        printedTotal: z.number().int().min(0),
         taxInvoiceComplete: z.boolean().default(false),
         items: z.array(z.object({
           productId: z.number(),
@@ -323,7 +327,7 @@ export const ordersRouter = createRouter({
           poId: po.id,
           invoiceDate: input.invoiceDate,
           dueDate: input.dueDate ?? null,
-          printedTotal: input.printedTotal,
+          printedTotal: 0,
           taxInvoiceComplete: input.taxInvoiceComplete,
           status: "draft",
         })
@@ -346,7 +350,7 @@ export const ordersRouter = createRouter({
     const [invoice] = await db.select({
       id: supplierInvoices.id, number: supplierInvoices.number, supplierId: supplierInvoices.supplierId,
       supplierName: suppliers.name, poId: supplierInvoices.poId, invoiceDate: supplierInvoices.invoiceDate,
-      dueDate: supplierInvoices.dueDate, printedTotal: supplierInvoices.printedTotal,
+      dueDate: supplierInvoices.dueDate,
       taxInvoiceComplete: supplierInvoices.taxInvoiceComplete, status: supplierInvoices.status,
     }).from(supplierInvoices).innerJoin(suppliers, eq(supplierInvoices.supplierId, suppliers.id))
       .where(eq(supplierInvoices.id, input.id)).limit(1);
@@ -357,17 +361,22 @@ export const ordersRouter = createRouter({
       discountPercent: supplierInvoiceItems.discountPercent, ppnPercent: supplierInvoiceItems.ppnPercent,
     }).from(supplierInvoiceItems).innerJoin(products, eq(supplierInvoiceItems.productId, products.id))
       .where(eq(supplierInvoiceItems.invoiceId, input.id));
-    const computedTotal = items.reduce((s, i) => {
-      const gross = i.qty * i.unitCost; const net = gross - Math.round(gross * i.discountPercent / 100);
-      return s + net + Math.round(net * i.ppnPercent / 100);
+    const totalAfterDiscount = items.reduce((s, i) => {
+      const gross = i.qty * i.unitCost;
+      return s + gross - Math.round(gross * i.discountPercent / 100);
     }, 0);
-    return { ...invoice, items, computedTotal, selisih: invoice.printedTotal - computedTotal };
+    const totalPpn = items.reduce((s, i) => {
+      const gross = i.qty * i.unitCost;
+      const net = gross - Math.round(gross * i.discountPercent / 100);
+      return s + Math.round(net * i.ppnPercent / 100);
+    }, 0);
+    return { ...invoice, items, totalAfterDiscount, totalPpn, total: totalAfterDiscount + totalPpn };
   }),
 
   updateSupplierInvoiceDraft: financeProcedure.input(z.object({
     id: z.number(), number: z.string().min(1), invoiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-    printedTotal: z.number().int().min(0), taxInvoiceComplete: z.boolean(),
+    taxInvoiceComplete: z.boolean(),
     items: z.array(
       z.object({ productId: z.number(), qty: z.number().int().min(1), unitCost: z.number().int().min(0),
         discountPercent: z.number().finite().min(0).max(100), ppnPercent: z.number().int().min(0).max(100),
@@ -381,7 +390,7 @@ export const ordersRouter = createRouter({
       if (!inv) throw new TRPCError({ code: "NOT_FOUND", message: "Faktur tidak ditemukan" });
       if (inv.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Hanya faktur Draf yang bisa diedit." });
       await tx.update(supplierInvoices).set({ number: input.number, invoiceDate: input.invoiceDate, dueDate: input.dueDate ?? null,
-        printedTotal: input.printedTotal, taxInvoiceComplete: input.taxInvoiceComplete }).where(eq(supplierInvoices.id, input.id));
+        taxInvoiceComplete: input.taxInvoiceComplete }).where(eq(supplierInvoices.id, input.id));
       await tx.delete(supplierInvoiceItems).where(eq(supplierInvoiceItems.invoiceId, input.id));
       for (const item of input.items) await tx.insert(supplierInvoiceItems).values({ invoiceId: input.id, ...item });
       return { ok: true };
@@ -411,7 +420,6 @@ export const ordersRouter = createRouter({
         number: supplierInvoices.number,
         invoiceDate: supplierInvoices.invoiceDate,
         dueDate: supplierInvoices.dueDate,
-        printedTotal: supplierInvoices.printedTotal,
         status: supplierInvoices.status,
         taxInvoiceComplete: supplierInvoices.taxInvoiceComplete,
         supplierName: suppliers.name,
@@ -424,13 +432,19 @@ export const ordersRouter = createRouter({
     const pays = await db.select().from(payments);
     return fakturs.map((f) => {
       const its = items.filter((i) => i.invoiceId === f.id);
-      const computed = its.reduce((s, i) => {
+      const totalAfterDiscount = its.reduce((s, i) => {
         const gross = i.qty * i.unitCost;
         const net = gross - Math.round(gross * i.discountPercent / 100);
-        return s + net + Math.round(net * i.ppnPercent / 100);
+        return s + net;
+      }, 0);
+      const totalPpn = its.reduce((s, i) => {
+        const gross = i.qty * i.unitCost;
+        const net = gross - Math.round(gross * i.discountPercent / 100);
+        return s + Math.round(net * i.ppnPercent / 100);
       }, 0);
       const paid = pays.filter((p) => p.supplierInvoiceId === f.id).reduce((s, p) => s + p.amount, 0);
-      return { ...f, computedTotal: computed, selisih: f.printedTotal - computed, paid, remaining: computed - paid };
+      const total = totalAfterDiscount + totalPpn;
+      return { ...f, totalAfterDiscount, totalPpn, total, paid, remaining: total - paid };
     });
   }),
 });

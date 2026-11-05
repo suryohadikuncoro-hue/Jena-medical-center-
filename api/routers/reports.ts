@@ -96,7 +96,6 @@ export const reportsRouter = createRouter({
         id: supplierInvoices.id,
         number: supplierInvoices.number,
         status: supplierInvoices.status,
-        printedTotal: supplierInvoices.printedTotal,
         dueDate: supplierInvoices.dueDate,
         taxInvoiceComplete: supplierInvoices.taxInvoiceComplete,
         supplierName: suppliers.name,
@@ -119,7 +118,6 @@ export const reportsRouter = createRouter({
     // --- dokumen yang perlu diproses ---
     const baru = orders.filter((o) => o.status === "draft");
     const menungguCount = countSalesOrdersWithPendingSupplier(orders.map((o) => o.id), pendingSupplierCounts);
-    const selisih = faks.filter((f) => f.printedTotal !== fakComputed(f.id));
 
     // --- perlu tindakan ---
     const ditagih = invs.filter((i) => i.status !== "draft").reduce((s, i) => s + i.subtotal, 0);
@@ -134,17 +132,6 @@ export const reportsRouter = createRouter({
 
     // --- perlu dipantau (maks 4) ---
     const pantau: { kind: string; title: string; lines: { label: string; value: string }[]; date?: string }[] = [];
-    for (const f of selisih.slice(0, 1)) {
-      const d = f.printedTotal - fakComputed(f.id);
-      pantau.push({
-        kind: "selisih",
-        title: `Faktur ${f.number}`,
-        lines: [
-          { label: "Selisih", value: `Rp ${Math.abs(d).toLocaleString("id-ID")}` },
-          { label: "Supplier", value: f.supplierName },
-        ],
-      });
-    }
     const openInv = invs.filter((i) => (i.status === "issued" || i.status === "partial") && i.total - paidInv(i.id) > 0);
     for (const i of openInv.slice(0, 3)) {
       pantau.push({
@@ -195,7 +182,6 @@ export const reportsRouter = createRouter({
     return {
       baruCount: baru.length,
       menungguCount,
-      selisihCount: selisih.length,
       ditagih,
       belumDitagih: openOrderValue,
       invoiceStatus: {
@@ -225,11 +211,10 @@ export const reportsRouter = createRouter({
         drafInvoice: invs.filter((i) => i.status === "draft").length,
         nilaiDrafInvoice: invs.filter((i) => i.status === "draft").reduce((s, i) => s + i.subtotal, 0),
         drafFaktur: faks.filter((f) => f.status === "draft").length,
-        nilaiDrafFaktur: faks.filter((f) => f.status === "draft").reduce((s, f) => s + f.printedTotal, 0),
+        totalDrafFaktur: faks.filter((f) => f.status === "draft").reduce((s, f) => s + fakComputed(f.id), 0),
       },
       perluDiselesaikan: {
         pajakMasukBelumLengkap: faks.filter((f) => f.status !== "draft" && !f.taxInvoiceComplete).length,
-        fakturSelisih: selisih.length,
         drafInvoice: invs.filter((i) => i.status === "draft").length,
       },
     };
@@ -256,10 +241,12 @@ export const reportsRouter = createRouter({
       const faks = await db.select().from(supplierInvoices);
       const fakItems = await db.select().from(supplierInvoiceItems);
       const openInv = invs.filter((i) => i.status === "issued" || i.status === "partial");
-      const fakComputed = (id: number) => fakItems.filter((i) => i.invoiceId === id).reduce((s, i) => {
-        const gross = i.qty * i.unitCost;
-        const net = gross - Math.round(gross * i.discountPercent / 100);
-        return s + net + Math.round(net * i.ppnPercent / 100);
+      const totalDrafFaktur = faks.filter((f) => f.status === "draft").reduce((sum, faktur) => {
+        return sum + fakItems.filter((item) => item.invoiceId === faktur.id).reduce((itemSum, item) => {
+          const gross = item.qty * item.unitCost;
+          const net = gross - Math.round(gross * item.discountPercent / 100);
+          return itemSum + net + Math.round(net * item.ppnPercent / 100);
+        }, 0);
       }, 0);
 
       return {
@@ -291,11 +278,10 @@ export const reportsRouter = createRouter({
           drafInvoice: invs.filter((i) => i.status === "draft").length,
           nilaiDrafInvoice: invs.filter((i) => i.status === "draft").reduce((s, i) => s + i.subtotal, 0),
           drafFaktur: faks.filter((f) => f.status === "draft").length,
-          nilaiDrafFaktur: faks.filter((f) => f.status === "draft").reduce((s, f) => s + f.printedTotal, 0),
+          totalDrafFaktur,
         },
         perluDiselesaikan: {
           pajakMasukBelumLengkap: faks.filter((f) => f.status !== "draft" && !f.taxInvoiceComplete).length,
-          fakturSelisih: faks.filter((f) => f.printedTotal !== fakComputed(f.id)).length,
           drafInvoice: invs.filter((i) => i.status === "draft").length,
         },
       };

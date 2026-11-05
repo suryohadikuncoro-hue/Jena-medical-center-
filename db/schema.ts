@@ -115,6 +115,7 @@ export const supplierInvoices = pgTable("supplier_invoices", {
   poId: bigint("po_id", { mode: "number" }),
   invoiceDate: varchar("invoice_date", { length: 10 }).notNull(),
   dueDate: varchar("due_date", { length: 10 }),
+  // Legacy compatibility column; invoice totals are now derived from item rows.
   printedTotal: integer("printed_total").notNull(),
   status: supplierInvoiceStatus("status").notNull().default("draft"),
   taxInvoiceComplete: boolean("tax_invoice_complete").notNull().default(false),

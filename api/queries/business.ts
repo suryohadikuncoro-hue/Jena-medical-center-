@@ -130,13 +130,12 @@ export async function postSupplierInvoice(id: number) {
     }
 
     const total = stockValue + vatIn;
-    if (inv.printedTotal !== total) throw new Error("Total faktur supplier tidak sesuai dengan rincian barang");
     await postJournal(inv.invoiceDate, `Faktur supplier ${inv.number}`, "supplier_invoice", id, [
       { code: COA.PERSEDIAAN, debit: stockValue },
       ...(vatIn > 0 ? [{ code: COA.PPN_MASUKAN, debit: vatIn }] : []),
       { code: COA.HUTANG, credit: total },
     ], tx);
-    await tx.update(supplierInvoices).set({ status: "posted", printedTotal: inv.printedTotal }).where(eq(supplierInvoices.id, id));
+    await tx.update(supplierInvoices).set({ status: "posted" }).where(eq(supplierInvoices.id, id));
     return { stockValue, vatIn, total };
   });
 }

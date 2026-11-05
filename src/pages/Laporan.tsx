@@ -67,7 +67,7 @@ function Ikhtisar({ month }: { month: string }) {
           <Stat label="Draf invoice pelanggan" n={d.dokumenBelumDibukukan.drafInvoice} sub="Belum menjadi piutang" />
           <Stat label="Nilai draf pelanggan" n={rpShort(d.dokumenBelumDibukukan.nilaiDrafInvoice)} sub="Belum termasuk PPN, bukan pendapatan" />
           <Stat label="Draf faktur supplier" n={d.dokumenBelumDibukukan.drafFaktur} sub="Belum menjadi hutang usaha" />
-          <Stat label="Nilai tercetak faktur" n={rpShort(d.dokumenBelumDibukukan.nilaiDrafFaktur)} sub="Mengikuti dokumen, bukan HPP" />
+          <Stat label="Total faktur draf supplier" n={rpShort(d.dokumenBelumDibukukan.totalDrafFaktur)} sub="Dihitung dari rincian barang dan PPN" />
         </div>
       </Section>
       <Section title="Dari pembukuan">
@@ -87,7 +87,6 @@ function Ikhtisar({ month }: { month: string }) {
       <Section title="Perlu diselesaikan" note={`Sebelum tutup buku ${namaBulan(month)}`}>
         <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
           <KV k="Faktur pajak masuk belum lengkap" v={`${d.perluDiselesaikan.pajakMasukBelumLengkap} · PPN masukan belum bisa dikreditkan`} />
-          <KV k="Faktur supplier selisih" v={`${d.perluDiselesaikan.fakturSelisih} · hitungan sistem beda dengan faktur cetak`} />
           <KV k="Draf invoice" v={`${d.perluDiselesaikan.drafInvoice} · belum diterbitkan`} />
         </div>
       </Section>

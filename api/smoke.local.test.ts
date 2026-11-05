@@ -141,7 +141,6 @@ describe.skipIf(!databaseUrl)("authenticated local smoke simulation (local Postg
       poId: po.id,
       number: "SMOKE-SI-001",
       invoiceDate: date,
-      printedTotal: 4_944,
       taxInvoiceComplete: false,
       items: [{ productId: 2, qty: 3, unitCost: 4_000, discountPercent: 58.8, ppnPercent: 0 }],
     });

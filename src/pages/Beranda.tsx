@@ -133,12 +133,12 @@ export default function Beranda() {
       tone: "mint",
     },
     {
-      label: "Faktur ada selisih",
-      value: d.selisihCount,
-      detail: "Periksa nilai faktur dengan hitungan sistem",
-      badge: d.selisihCount > 0 ? "Perlu verifikasi" : "Tidak ada selisih",
+      label: "Faktur belum dibukukan",
+      value: d.dokumenBelumDibukukan.drafFaktur,
+      detail: "Faktur supplier berstatus draf",
+      badge: d.dokumenBelumDibukukan.drafFaktur > 0 ? "Perlu dibukukan" : "Tidak ada antrean",
       href: "/faktur",
-      icon: AlertTriangle,
+      icon: FileText,
       tone: "rose",
     },
   ];
@@ -146,7 +146,7 @@ export default function Beranda() {
   const actions: { label: string; detail: string; href: string; icon: LucideIcon; tone: Tone }[] = [
     { label: "Buat pesanan", detail: "Mulai order pelanggan", href: "/pesanan/baru", icon: ClipboardList, tone: "violet" },
     { label: "Tindak lanjuti supplier", detail: "Catat balasan atau penerimaan PO", href: "/pesanan?status=ordered", icon: Truck, tone: "mint" },
-    { label: "Periksa faktur", detail: "Cocokkan faktur supplier", href: "/faktur", icon: FileText, tone: "rose" },
+    { label: "Kelola faktur", detail: "Lihat faktur dan status pembukuan", href: "/faktur", icon: FileText, tone: "rose" },
   ];
 
   const finance = [
@@ -226,7 +226,7 @@ export default function Beranda() {
                   {d.pantau.map((item, i) => (
                     <Link
                       key={`${item.kind}-${item.title}-${i}`}
-                      to={item.kind === "selisih" ? "/faktur" : "/invoice"}
+                      to="/invoice"
                       className="group flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-[#fafbfc] sm:px-5"
                     >
                       <div className="flex min-w-0 items-start justify-between gap-3">
@@ -325,12 +325,12 @@ export default function Beranda() {
               </div>
               <div className="flex items-start gap-2 rounded-xl border border-[#edf0f4] p-3">
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[#e8f6f2] text-[#2f7568]"><FileText size={16} aria-hidden="true" /></span>
-                <div className="min-w-0"><p className="text-xs text-[#667085]">Draf faktur supplier</p><p className="mt-0.5 text-sm font-semibold text-[#30394a]">{d.dokumenBelumDibukukan.drafFaktur} · {rpShort(d.dokumenBelumDibukukan.nilaiDrafFaktur)}</p></div>
+                <div className="min-w-0"><p className="text-xs text-[#667085]">Draf faktur supplier</p><p className="mt-0.5 text-sm font-semibold text-[#30394a]">{d.dokumenBelumDibukukan.drafFaktur} · {rpShort(d.dokumenBelumDibukukan.totalDrafFaktur)}</p></div>
               </div>
             </div>
             <div className="border-t border-[#edf0f4] px-4 py-4 sm:px-5">
               <p className="text-xs leading-relaxed text-[#667085]">
-                Sebelum tutup buku: {d.perluDiselesaikan.pajakMasukBelumLengkap} faktur pajak belum lengkap · {d.perluDiselesaikan.fakturSelisih} faktur selisih · {d.perluDiselesaikan.drafInvoice} draf invoice.
+                Sebelum tutup buku: {d.perluDiselesaikan.pajakMasukBelumLengkap} faktur pajak belum lengkap · {d.perluDiselesaikan.drafInvoice} draf invoice.
               </p>
             </div>
             <p className="px-4 pb-5 text-[0.68rem] leading-relaxed text-[#667085] sm:px-5">

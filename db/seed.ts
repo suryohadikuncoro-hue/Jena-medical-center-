@@ -253,7 +253,7 @@ async function seed() {
     { invoiceId: inv5.id, productId: pTensi.id, description: "Tensimeter digital", qty: 1, unitPrice: 720000, taxable: true },
   ]);
 
-  // ---------- Faktur supplier 8821 (draf, selisih Rp 3) ----------
+  // ---------- Faktur supplier 8821 (draf) ----------
   const [fak3] = await db.insert(supplierInvoices).values({
     number: "8821",
     supplierId: sup2.id,
