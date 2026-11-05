@@ -365,8 +365,8 @@ export const ordersRouter = createRouter({
   }),
 
   updateSupplierInvoiceDraft: protectedProcedure.input(z.object({
-    id: z.number(), number: z.string().min(1), invoiceDate: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/),
-    dueDate: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).optional().nullable(),
+    id: z.number(), number: z.string().min(1), invoiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
     printedTotal: z.number().int().min(0), taxInvoiceComplete: z.boolean(),
     items: z.array(z.object({ productId: z.number(), qty: z.number().int().min(1), unitCost: z.number().int().min(0),
       discountPercent: z.number().finite().min(0).max(100), ppnPercent: z.number().int().min(0).max(100 })).min(1),
