@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createRouter, protectedProcedure } from "../middleware";
+import { createRouter, financeProcedure, protectedProcedure } from "../middleware";
 import { getDb } from "../queries/connection";
 import {
   customers,
@@ -15,7 +15,7 @@ import {
   supplierInvoices,
   suppliers,
 } from "@db/schema";
-import { eq, desc, asc, inArray } from "drizzle-orm";
+import { eq, desc, asc, inArray, sql } from "drizzle-orm";
 import { postSupplierInvoice, orderTotal } from "../queries/business";
 import { pendingSupplierCountsBySalesOrder } from "../queries/order-status";
 
@@ -339,6 +339,69 @@ export const ordersRouter = createRouter({
     .mutation(async ({ input }) => {
       return postSupplierInvoice(input.id);
     }),
+
+
+  supplierInvoiceDetail: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
+    const db = getDb();
+    const [invoice] = await db.select({
+      id: supplierInvoices.id, number: supplierInvoices.number, supplierId: supplierInvoices.supplierId,
+      supplierName: suppliers.name, poId: supplierInvoices.poId, invoiceDate: supplierInvoices.invoiceDate,
+      dueDate: supplierInvoices.dueDate, printedTotal: supplierInvoices.printedTotal,
+      taxInvoiceComplete: supplierInvoices.taxInvoiceComplete, status: supplierInvoices.status,
+    }).from(supplierInvoices).innerJoin(suppliers, eq(supplierInvoices.supplierId, suppliers.id))
+      .where(eq(supplierInvoices.id, input.id)).limit(1);
+    if (!invoice) throw new TRPCError({ code: "NOT_FOUND", message: "Faktur tidak ditemukan" });
+    const items = await db.select({
+      id: supplierInvoiceItems.id, productId: products.id, productName: products.name, sku: products.sku, unit: products.unit,
+      qty: supplierInvoiceItems.qty, unitCost: supplierInvoiceItems.unitCost,
+      discountPercent: supplierInvoiceItems.discountPercent, ppnPercent: supplierInvoiceItems.ppnPercent,
+    }).from(supplierInvoiceItems).innerJoin(products, eq(supplierInvoiceItems.productId, products.id))
+      .where(eq(supplierInvoiceItems.invoiceId, input.id));
+    const computedTotal = items.reduce((s, i) => {
+      const gross = i.qty * i.unitCost; const net = gross - Math.round(gross * i.discountPercent / 100);
+      return s + net + Math.round(net * i.ppnPercent / 100);
+    }, 0);
+    return { ...invoice, items, computedTotal, selisih: invoice.printedTotal - computedTotal };
+  }),
+
+  updateSupplierInvoiceDraft: financeProcedure.input(z.object({
+    id: z.number(), number: z.string().min(1), invoiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+    printedTotal: z.number().int().min(0), taxInvoiceComplete: z.boolean(),
+    items: z.array(
+      z.object({ productId: z.number(), qty: z.number().int().min(1), unitCost: z.number().int().min(0),
+        discountPercent: z.number().finite().min(0).max(100), ppnPercent: z.number().int().min(0).max(100),
+      })
+    ).min(1),
+  })).mutation(async ({ input }) => {
+    const db = getDb();
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select id from supplier_invoices where id = ${input.id} for update`);
+      const [inv] = await tx.select({ status: supplierInvoices.status }).from(supplierInvoices).where(eq(supplierInvoices.id, input.id)).limit(1);
+      if (!inv) throw new TRPCError({ code: "NOT_FOUND", message: "Faktur tidak ditemukan" });
+      if (inv.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Hanya faktur Draf yang bisa diedit." });
+      await tx.update(supplierInvoices).set({ number: input.number, invoiceDate: input.invoiceDate, dueDate: input.dueDate ?? null,
+        printedTotal: input.printedTotal, taxInvoiceComplete: input.taxInvoiceComplete }).where(eq(supplierInvoices.id, input.id));
+      await tx.delete(supplierInvoiceItems).where(eq(supplierInvoiceItems.invoiceId, input.id));
+      for (const item of input.items) await tx.insert(supplierInvoiceItems).values({ invoiceId: input.id, ...item });
+      return { ok: true };
+    });
+  }),
+
+  deleteSupplierInvoiceDraft: financeProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    const db = getDb();
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`select id from supplier_invoices where id = ${input.id} for update`);
+      const [inv] = await tx.select({ status: supplierInvoices.status }).from(supplierInvoices).where(eq(supplierInvoices.id, input.id)).limit(1);
+      if (!inv) throw new TRPCError({ code: "NOT_FOUND", message: "Faktur tidak ditemukan" });
+      if (inv.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Hanya faktur Draf yang bisa dihapus." });
+      const linkedPayments = await tx.select({ id: payments.id }).from(payments).where(eq(payments.supplierInvoiceId, input.id)).limit(1);
+      if (linkedPayments.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Faktur memiliki pembayaran terkait dan tidak bisa dihapus." });
+      await tx.delete(supplierInvoiceItems).where(eq(supplierInvoiceItems.invoiceId, input.id));
+      await tx.delete(supplierInvoices).where(eq(supplierInvoices.id, input.id));
+      return { ok: true };
+    });
+  }),
 
   supplierInvoices: protectedProcedure.query(async () => {
     const db = getDb();
