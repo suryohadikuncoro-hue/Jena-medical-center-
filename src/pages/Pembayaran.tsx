@@ -123,7 +123,7 @@ export default function Pembayaran() {
             </div>
           </div>
           {selectedRemaining !== undefined && (
-            <p className="mt-2 rounded-xl bg-[#eef0ff] px-3 py-2 text-xs text-[#3d4b93]" role="status">
+            <p className="mt-2 rounded-xl bg-[var(--slate-tint)] px-3 py-2 text-xs text-[var(--slate-deep)]" role="status">
               Sisa tagihan yang dipilih: <strong className="tabular-nums">{rp(selectedRemaining)}</strong>
             </p>
           )}

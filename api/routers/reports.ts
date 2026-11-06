@@ -179,6 +179,53 @@ export const reportsRouter = createRouter({
       tren.push({ label: MONTH_ID[d.getMonth()], pendapatan: -movement(lines, "4101", f, t), hpp: movement(lines, "5101", f, t) });
     }
 
+    // --- seri 14 hari untuk grafik mini kartu ringkasan ---
+    const seri: { date: string; pendapatan: number; labaKotor: number; piutang: number; hutang: number }[] = [];
+    for (let k = 13; k >= 0; k--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - k);
+      const key = dayKey(d);
+      const rev = -movement(lines, "4101", key, key);
+      seri.push({
+        date: key,
+        pendapatan: rev,
+        labaKotor: rev - movement(lines, "5101", key, key),
+        piutang: balanceOf(lines, "1201", key),
+        hutang: -balanceOf(lines, "2101", key),
+      });
+    }
+
+    // --- umur piutang: sisa tagihan per keterlambatan dari jatuh tempo ---
+    const todayKey = dayKey(now);
+    const dayDiff = (a: string, b: string) => Math.round((new Date(`${a}T00:00:00`).getTime() - new Date(`${b}T00:00:00`).getTime()) / 86_400_000);
+    const umurPiutang = { belumTempo: 0, telat1_30: 0, telat31_60: 0, telatLebih60: 0 };
+    for (const i of openInv) {
+      const sisa = i.total - paidInv(i.id);
+      const late = i.dueDate ? dayDiff(todayKey, i.dueDate) : 0;
+      if (late <= 0) umurPiutang.belumTempo += sisa;
+      else if (late <= 30) umurPiutang.telat1_30 += sisa;
+      else if (late <= 60) umurPiutang.telat31_60 += sisa;
+      else umurPiutang.telatLebih60 += sisa;
+    }
+
+    // --- pelanggan teratas bulan berjalan (nilai pesanan) ---
+    const perPelanggan = new Map<string, number>();
+    for (const o of orders.filter((x) => x.orderDate.startsWith(mk))) {
+      perPelanggan.set(o.customerName, (perPelanggan.get(o.customerName) ?? 0) + orderTotal(o.id));
+    }
+    const pelangganTeratas = [...perPelanggan.entries()]
+      .map(([nama, nilai]) => ({ nama, nilai }))
+      .sort((a, b) => b.nilai - a.nilai)
+      .slice(0, 5);
+
+    // --- hutang supplier yang jatuh tempo dalam 7 hari (termasuk yang sudah lewat) ---
+    const in7 = new Date(now);
+    in7.setDate(in7.getDate() + 7);
+    const paidFak = (id: number) => pays.filter((p) => p.supplierInvoiceId === id).reduce((s, p) => s + p.amount, 0);
+    const hutangTempo = faks
+      .filter((f) => (f.status === "posted" || f.status === "partial") && f.dueDate && f.dueDate <= dayKey(in7))
+      .map((f) => Math.max(0, fakComputed(f.id) - paidFak(f.id)));
+
     return {
       baruCount: baru.length,
       menungguCount,
@@ -207,6 +254,11 @@ export const reportsRouter = createRouter({
         }).length,
       },
       tren,
+      seri,
+      umurPiutang,
+      pelangganTeratas,
+      hutangTempo7: { count: hutangTempo.length, nilai: hutangTempo.reduce((a, b) => a + b, 0) },
+      terkonfirmasiCount: orders.filter((o) => o.status === "confirmed").length,
       dokumenBelumDibukukan: {
         drafInvoice: invs.filter((i) => i.status === "draft").length,
         nilaiDrafInvoice: invs.filter((i) => i.status === "draft").reduce((s, i) => s + i.subtotal, 0),

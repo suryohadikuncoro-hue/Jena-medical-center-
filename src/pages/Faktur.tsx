@@ -22,10 +22,10 @@ function calculateTotals(items: ItemDraft[]) {
 }
 
 function InvoiceTotals({ totalAfterDiscount, totalPpn, total }: { totalAfterDiscount: number; totalPpn: number; total: number }) {
-  return <div className="mt-4 ml-auto max-w-sm space-y-2 text-sm">
+  return <div className="mt-4 ml-auto max-w-sm space-y-2 rounded-xl bg-[var(--surface-soft)] p-4 text-sm tabular-nums">
     <div className="flex justify-between"><span>DPP</span><b>{rp(totalAfterDiscount)}</b></div>
     <div className="flex justify-between"><span>Total PPN</span><b>{rp(totalPpn)}</b></div>
-    <div className="flex justify-between border-t pt-2"><span>Total</span><b>{rp(total)}</b></div>
+    <div className="flex justify-between border-t border-[var(--line)] pt-2"><span>Total</span><b>{rp(total)}</b></div>
   </div>;
 }
 
@@ -62,10 +62,10 @@ export default function Faktur() {
     <PageHeader title="Faktur supplier" sub="Draf belum menjadi hutang; bukukan setelah rincian faktur diperiksa" />
     <Section>
       {q.data.length === 0 ? <Empty text="Belum ada faktur supplier tercatat." /> :
-        <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
-          {q.data.map((f) => <button type="button" key={f.id} onClick={() => { setSelected(f.id); setEditing(false); }} className="block w-full px-4 py-4 text-left transition hover:bg-[var(--surface-soft)] md:px-8">
+        <div className="divide-y divide-[var(--line)]">
+          {q.data.map((f) => <button type="button" key={f.id} onClick={() => { setSelected(f.id); setEditing(false); }} className="block w-full px-4 py-4 text-left transition hover:bg-[var(--slate-tint)] md:px-6">
             <div className="flex flex-wrap items-center justify-between gap-3"><div>
-              <div className="flex flex-wrap items-center gap-2"><span className="font-display text-base font-semibold">Faktur {f.number}</span><StatusBadge status={f.status} />{!f.taxInvoiceComplete && f.status !== "draft" && <span className="badge bg-[#fff3d6] text-[var(--warn)]">Pajak belum lengkap</span>}</div>
+              <div className="flex flex-wrap items-center gap-2"><span className="font-display text-[0.9375rem] font-semibold text-[var(--navy)]">Faktur {f.number}</span><StatusBadge status={f.status} />{!f.taxInvoiceComplete && f.status !== "draft" && <span className="badge bg-[#fff3d6] text-[var(--warn)]">Pajak belum lengkap</span>}</div>
               <div className="mt-1 text-sm text-[var(--ink-soft)]">{f.supplierName} · {tanggal(f.invoiceDate)}{f.dueDate ? ` · tempo ${tanggal(f.dueDate)}` : ""}</div>
             </div><div className="flex items-center gap-3"><div className="text-right"><div className="font-display text-base font-semibold">{rp(f.total)}</div><div className="text-xs text-[var(--ink-soft)]">Total</div></div><ChevronRight size={18} /></div></div>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs"><span className="text-[var(--ink-soft)]">DPP: {rp(f.totalAfterDiscount)}</span><span className="text-[var(--ink-soft)]">Total PPN: {rp(f.totalPpn)}</span>{f.status !== "draft" && f.remaining > 0 && <span className="text-[var(--ink-soft)]">Sisa hutang {rp(f.remaining)}</span>}</div>
@@ -73,13 +73,13 @@ export default function Faktur() {
         </div>}
     </Section>
 
-    {selected !== null && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 md:items-center md:p-4" onClick={() => setSelected(null)}>
-      <div className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-2xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-xl md:rounded-2xl md:p-6" onClick={(event) => event.stopPropagation()}>
-        <div className="mb-4 flex items-center justify-between"><h2 className="font-display text-xl font-bold">Detail faktur {d?.number ?? ""}</h2><button className="btn btn-ghost !min-h-10" onClick={() => setSelected(null)} aria-label="Tutup"><X /></button></div>
+    {selected !== null && <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#18212f]/55 p-0 backdrop-blur-[2px] md:items-center md:p-4" onClick={() => setSelected(null)}>
+      <div className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-3xl border border-[var(--line)] bg-white p-5 shadow-2xl md:rounded-2xl md:p-6" onClick={(event) => event.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between"><h2 className="font-display text-xl font-bold text-[var(--navy)]">Detail faktur {d?.number ?? ""}</h2><button className="btn btn-ghost !min-h-10" onClick={() => setSelected(null)} aria-label="Tutup"><X /></button></div>
         {detail.isLoading ? <Loading /> : detail.error ? <LoadError message={detail.error.message} retry={() => detail.refetch()} /> : d && <>
           {!editing ? <>
-            <div className="grid grid-cols-2 gap-3 rounded-xl bg-[var(--surface-soft)] p-3 text-sm md:grid-cols-3"><div><span className="text-[var(--ink-soft)]">Supplier</span><p className="font-semibold">{d.supplierName}</p></div><div><span className="text-[var(--ink-soft)]">Tanggal faktur</span><p className="font-semibold">{tanggal(d.invoiceDate)}</p></div><div><span className="text-[var(--ink-soft)]">Jatuh tempo</span><p className="font-semibold">{d.dueDate ? tanggal(d.dueDate) : "—"}</p></div><div><span className="text-[var(--ink-soft)]">Status</span><p><StatusBadge status={d.status} /></p></div><div><span className="text-[var(--ink-soft)]">Pajak lengkap</span><p className="font-semibold">{d.taxInvoiceComplete ? "Ya" : "Tidak"}</p></div></div>
-            <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[600px] text-sm"><thead><tr className="border-b text-left text-[var(--ink-soft)]"><th className="py-2">Barang</th><th>Qty</th><th>Harga</th><th>Diskon</th><th>PPN</th><th className="text-right">Total</th></tr></thead><tbody>{d.items.map((item) => { const net = item.qty * item.unitCost - Math.round(item.qty * item.unitCost * item.discountPercent / 100); return <tr key={item.id} className="border-b border-[var(--line)]"><td className="py-3">{item.productName}<div className="text-xs text-[var(--ink-soft)]">{item.sku}</div></td><td>{item.qty} {item.unit}</td><td>{rp(item.unitCost)}</td><td>{item.discountPercent}%</td><td>{item.ppnPercent}%</td><td className="text-right">{rp(net + Math.round(net * item.ppnPercent / 100))}</td></tr>; })}</tbody></table></div>
+            <div className="grid grid-cols-2 gap-3 rounded-xl bg-[var(--surface-soft)] p-4 text-sm md:grid-cols-3"><div><span className="text-[var(--ink-soft)]">Supplier</span><p className="font-semibold">{d.supplierName}</p></div><div><span className="text-[var(--ink-soft)]">Tanggal faktur</span><p className="font-semibold">{tanggal(d.invoiceDate)}</p></div><div><span className="text-[var(--ink-soft)]">Jatuh tempo</span><p className="font-semibold">{d.dueDate ? tanggal(d.dueDate) : "—"}</p></div><div><span className="text-[var(--ink-soft)]">Status</span><p><StatusBadge status={d.status} /></p></div><div><span className="text-[var(--ink-soft)]">Pajak lengkap</span><p className="font-semibold">{d.taxInvoiceComplete ? "Ya" : "Tidak"}</p></div></div>
+            <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[600px] text-sm"><thead><tr className="border-b border-[var(--line)] text-left text-xs font-medium text-[var(--ink-soft)]"><th className="py-2">Barang</th><th>Qty</th><th>Harga</th><th>Diskon</th><th>PPN</th><th className="text-right">Total</th></tr></thead><tbody>{d.items.map((item) => { const net = item.qty * item.unitCost - Math.round(item.qty * item.unitCost * item.discountPercent / 100); return <tr key={item.id} className="border-b border-[var(--line)]"><td className="py-3">{item.productName}<div className="text-xs text-[var(--ink-soft)]">{item.sku}</div></td><td>{item.qty} {item.unit}</td><td>{rp(item.unitCost)}</td><td>{item.discountPercent}%</td><td>{item.ppnPercent}%</td><td className="text-right">{rp(net + Math.round(net * item.ppnPercent / 100))}</td></tr>; })}</tbody></table></div>
             <InvoiceTotals totalAfterDiscount={d.totalAfterDiscount} totalPpn={d.totalPpn} total={d.total} />
             <div className="mt-5 flex flex-wrap justify-end gap-2">{d.status === "draft" && <><button className="btn btn-ghost text-[var(--bad)]" disabled={remove.isPending} onClick={() => { if (confirm("Hapus faktur Draf ini beserta rincian barangnya?")) remove.mutate({ id: d.id }); }}><Trash2 size={16} /> Hapus</button><button className="btn btn-accent" onClick={startEdit}><Pencil size={16} /> Edit faktur</button><button className="btn btn-primary" disabled={post.isPending} onClick={() => post.mutate({ id: d.id })}>Bukukan faktur</button></>}</div>
           </> : <>
