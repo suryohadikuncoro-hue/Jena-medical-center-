@@ -70,8 +70,13 @@ export const reportsRouter = createRouter({
     const db = getDb();
     const lines = await allLines();
     const now = new Date();
-    const periodFrom = input.from ?? "0000-01-01";
     const periodTo = input.to ?? dayKey(now);
+    // Saat filter tanggal dikosongkan, batas bawah rentang mengikuti tanggal jurnal
+    // paling awal, bukan string sentinel "0000-01-01". Nilai ini ikut dipakai untuk
+    // membentuk bulan pada seri tren, dan `new Date(0, ...)` — tahun 1900 — bukan
+    // tahun 0000, sehingga label tren menjadi "Des 1900" dan rentangnya meleset jauh.
+    const firstActivity = lines.reduce((earliest, line) => line.date < earliest ? line.date : earliest, periodTo);
+    const periodFrom = input.from ?? firstActivity;
 
     const orders = await db
       .select({
@@ -176,7 +181,6 @@ export const reportsRouter = createRouter({
 
     // Tren bulanan mengikuti rentang filter; tanpa tanggal mencakup seluruh histori.
     const tren: { label: string; pendapatan: number; hpp: number }[] = [];
-    const firstActivity = lines.reduce((earliest, line) => line.date < earliest ? line.date : earliest, periodTo);
     const firstMonth = input.from ? input.from.slice(0, 7) : firstActivity.slice(0, 7);
     const lastMonth = periodTo.slice(0, 7);
     const [firstYear, firstMonthNumber] = firstMonth.split("-").map(Number);
