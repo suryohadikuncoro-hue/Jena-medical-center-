@@ -107,7 +107,7 @@ export async function shareInvoicePdf(inv: { number: string; issueDate: string; 
   const totalX = 390;
   line(page, y + 11, totalX, 553, 0.8, COLORS.accent);
   rightText(page, "Subtotal", 470, y - 5, regular, 9, COLORS.muted); rightText(page, money(inv.subtotal), 553, y - 5, regular, 9); y -= 21;
-  rightText(page, "PPN", 470, y - 5, regular, 9, COLORS.muted); rightText(page, money(inv.ppnAmount), 553, y - 5, regular, 9); y -= 25;
+  rightText(page, "PPN", 470, y - 5, regular, 9, COLORS.muted); rightText(page, money(inv.ppnAmount), 553, y - 5, regular, 9); y -= 45;
   page.drawRectangle({ x: totalX, y: y - 9, width: 163, height: 34, color: COLORS.accent });
   text(page, "TOTAL", totalX + 12, y + 4, bold, 10, COLORS.white); rightText(page, money(inv.total), 541, y + 4, bold, 10, COLORS.white);
   footer(page, regular, 1);
