@@ -164,9 +164,15 @@ export default function Beranda() {
           <button
             className="btn btn-ghost min-h-10"
             type="button"
-            onClick={() => { setDraft({ from: "", to: "" }); setFilter({ from: "", to: "" }); }}
+            onClick={() => {
+              const to = todayLocal();
+              const from = `${to.slice(0, 7)}-01`;
+              const month = { from, to };
+              setDraft(month);
+              setFilter(month);
+            }}
           >
-            Keseluruhan
+            Bulan ini
           </button>
           {invalidRange && <p className="w-full text-xs text-[var(--bad)]" role="alert">Tanggal awal harus sebelum atau sama dengan tanggal akhir.</p>}
         </form>
