@@ -61,9 +61,17 @@ const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padSt
 
 export const reportsRouter = createRouter({
   // ---------- Beranda ----------
-  dashboard: protectedProcedure.query(async () => {
+  dashboard: protectedProcedure
+    .input(z.object({
+      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    }).refine(({ from, to }) => !from || !to || from <= to, { message: "Tanggal awal harus sebelum atau sama dengan tanggal akhir" }))
+    .query(async ({ input }) => {
     const db = getDb();
     const lines = await allLines();
+    const now = new Date();
+    const periodFrom = input.from ?? "0000-01-01";
+    const periodTo = input.to ?? dayKey(now);
 
     const orders = await db
       .select({
@@ -146,7 +154,6 @@ export const reportsRouter = createRouter({
     }
 
     // --- aktivitas 7 hari terakhir ---
-    const now = new Date();
     const days: { date: string; label: string; pesanan: number; ditagih: number }[] = [];
     for (let k = 6; k >= 0; k--) {
       const d = new Date(now);
@@ -161,30 +168,34 @@ export const reportsRouter = createRouter({
     }
 
     // --- pembukuan bulan berjalan ---
-    const mk = monthKey(now);
-    const from = `${mk}-01`;
-    const pendapatan = -movement(lines, "4101", from, "9999");
-    const hpp = movement(lines, "5101", from, "9999");
-    const piutang = balanceOf(lines, "1201");
-    const hutang = -balanceOf(lines, "2101");
-    const kas = balanceOf(lines, "1101");
+    const pendapatan = -movement(lines, "4101", periodFrom, periodTo);
+    const hpp = movement(lines, "5101", periodFrom, periodTo);
+    const piutang = balanceOf(lines, "1201", periodTo);
+    const hutang = -balanceOf(lines, "2101", periodTo);
+    const kas = balanceOf(lines, "1101", periodTo);
 
-    // tren 6 bulan
+    // Tren bulanan mengikuti rentang filter; tanpa tanggal mencakup seluruh histori.
     const tren: { label: string; pendapatan: number; hpp: number }[] = [];
-    for (let k = 5; k >= 0; k--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - k, 1);
-      const m = monthKey(d);
-      const f = `${m}-01`;
-      const t = `${m}-31`;
-      tren.push({ label: MONTH_ID[d.getMonth()], pendapatan: -movement(lines, "4101", f, t), hpp: movement(lines, "5101", f, t) });
+    const firstActivity = lines.reduce((earliest, line) => line.date < earliest ? line.date : earliest, periodTo);
+    const firstMonth = input.from ? input.from.slice(0, 7) : firstActivity.slice(0, 7);
+    const lastMonth = periodTo.slice(0, 7);
+    const [firstYear, firstMonthNumber] = firstMonth.split("-").map(Number);
+    const [lastYear, lastMonthNumber] = lastMonth.split("-").map(Number);
+    for (let index = firstYear * 12 + firstMonthNumber - 1; index <= lastYear * 12 + lastMonthNumber - 1; index++) {
+      const d = new Date(Math.floor(index / 12), index % 12, 1);
+      const month = monthKey(d);
+      const monthFrom = `${month}-01` > periodFrom ? `${month}-01` : periodFrom;
+      const monthTo = `${month}-31` < periodTo ? `${month}-31` : periodTo;
+      tren.push({ label: `${MONTH_ID[d.getMonth()]} ${d.getFullYear()}`, pendapatan: -movement(lines, "4101", monthFrom, monthTo), hpp: movement(lines, "5101", monthFrom, monthTo) });
     }
 
-    // --- seri 14 hari untuk grafik mini kartu ringkasan ---
+    // --- seri 14 hari terakhir dalam rentang pilihan untuk grafik mini ---
     const seri: { date: string; pendapatan: number; labaKotor: number; piutang: number; hutang: number }[] = [];
     for (let k = 13; k >= 0; k--) {
-      const d = new Date(now);
+      const d = new Date(`${periodTo}T00:00:00`);
       d.setDate(d.getDate() - k);
       const key = dayKey(d);
+      if (key < periodFrom) continue;
       const rev = -movement(lines, "4101", key, key);
       seri.push({
         date: key,
@@ -210,7 +221,7 @@ export const reportsRouter = createRouter({
 
     // --- pelanggan teratas bulan berjalan (nilai pesanan) ---
     const perPelanggan = new Map<string, number>();
-    for (const o of orders.filter((x) => x.orderDate.startsWith(mk))) {
+    for (const o of orders.filter((x) => x.orderDate >= periodFrom && x.orderDate <= periodTo)) {
       perPelanggan.set(o.customerName, (perPelanggan.get(o.customerName) ?? 0) + orderTotal(o.id));
     }
     const pelangganTeratas = [...perPelanggan.entries()]

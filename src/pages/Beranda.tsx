@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { AlertTriangle, CheckCircle2, ChevronRight, Clock, FileText, Plus, Truck, type LucideIcon } from "lucide-react";
 import { trpc } from "@/providers/trpc";
-import { rp, rpShort, tanggal, tanggalPanjang } from "@/lib/format";
+import { rp, rpShort, tanggal, tanggalPanjang, todayLocal } from "@/lib/format";
 import { LoadError } from "@/components/bits";
 import { Donut, RevenueMarginChart, Sparkline } from "@/components/viz";
 
@@ -69,10 +69,14 @@ function DashboardLoading() {
   );
 }
 
-const pct = (n: number) => `${Math.abs(n).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
-
 export default function Beranda() {
-  const q = trpc.reports.dashboard.useQuery(undefined, { refetchOnMount: "always" });
+  const [filter, setFilter] = useState({ from: "", to: "" });
+  const [draft, setDraft] = useState({ from: "", to: "" });
+  const invalidRange = Boolean(draft.from && draft.to && draft.from > draft.to);
+  const q = trpc.reports.dashboard.useQuery(
+    { from: filter.from || undefined, to: filter.to || undefined },
+    { refetchOnMount: "always" },
+  );
 
   if (q.isLoading) return <DashboardLoading />;
   if (q.error || !q.data) {
@@ -88,12 +92,11 @@ export default function Beranda() {
   const d = q.data;
   const p = d.pembukuan;
   const now = new Date();
-  const cur = d.tren[d.tren.length - 1];
-  const prev = d.tren[d.tren.length - 2];
-  const revDelta = prev && prev.pendapatan > 0 ? ((cur.pendapatan - prev.pendapatan) / prev.pendapatan) * 100 : null;
   const margin = p.pendapatan > 0 ? (p.labaKotor / p.pendapatan) * 100 : 0;
-  const prevMargin = prev && prev.pendapatan > 0 ? ((prev.pendapatan - prev.hpp) / prev.pendapatan) * 100 : null;
-  const marginDelta = prevMargin === null ? null : margin - prevMargin;
+  const hasDateFilter = Boolean(filter.from || filter.to);
+  const periodLabel = !hasDateFilter
+    ? "Seluruh data"
+    : `${filter.from ? tanggal(filter.from) : "Awal data"} – ${filter.to ? tanggal(filter.to) : "Hari ini"}`;
   const u = d.umurPiutang;
   const telat = u.telat1_30 + u.telat31_60 + u.telatLebih60;
   const seri = (k: "pendapatan" | "labaKotor" | "piutang" | "hutang") => d.seri.map((s) => s[k]);
@@ -140,21 +143,49 @@ export default function Beranda() {
           </Link>
         </header>
 
+        <form
+          className="flex flex-wrap items-end gap-3 rounded-2xl border border-[var(--line)] bg-white p-3 sm:p-4"
+          onSubmit={(event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!invalidRange) setFilter(draft); }}
+          aria-label="Filter tanggal dashboard"
+        >
+          <div className="mr-auto min-w-[9rem]">
+            <p className="text-xs font-semibold text-[var(--ink-soft)]">Periode data</p>
+            <p className="mt-1 text-sm font-semibold text-[var(--ink)]">{periodLabel}</p>
+          </div>
+          <label className="grid gap-1 text-xs font-medium text-[var(--ink-soft)]">
+            Dari
+            <input type="date" value={draft.from} max={draft.to || todayLocal()} onChange={(event) => setDraft({ ...draft, from: event.target.value })} className="input min-h-10 px-3 text-sm text-[var(--ink)]" />
+          </label>
+          <label className="grid gap-1 text-xs font-medium text-[var(--ink-soft)]">
+            Sampai
+            <input type="date" value={draft.to} min={draft.from || undefined} max={todayLocal()} onChange={(event) => setDraft({ ...draft, to: event.target.value })} className="input min-h-10 px-3 text-sm text-[var(--ink)]" />
+          </label>
+          <button className="btn min-h-10" type="submit" disabled={invalidRange}>Terapkan</button>
+          <button
+            className="btn btn-ghost min-h-10"
+            type="button"
+            onClick={() => { setDraft({ from: "", to: "" }); setFilter({ from: "", to: "" }); }}
+          >
+            Keseluruhan
+          </button>
+          {invalidRange && <p className="w-full text-xs text-[var(--bad)]" role="alert">Tanggal awal harus sebelum atau sama dengan tanggal akhir.</p>}
+        </form>
+
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
           <Kpi
             label="Pendapatan"
             value={p.pendapatan}
             color={TEAL}
             series={seri("pendapatan")}
-            pill={revDelta === null ? <Pill tone="neutral">Bulan ini</Pill> : <Pill tone={revDelta >= 0 ? "up" : "down"}>{revDelta >= 0 ? "▲" : "▼"} {pct(revDelta)}</Pill>}
-            sub={prev ? `dari ${rpShort(prev.pendapatan)}` : "Bulan berjalan"}
+            pill={<Pill tone="neutral">{hasDateFilter ? "Periode" : "Semua"}</Pill>}
+            sub={periodLabel}
           />
           <Kpi
             label="Laba kotor"
             value={p.labaKotor}
             color="#f2b035"
             series={seri("labaKotor")}
-            pill={marginDelta === null ? <Pill tone="neutral">Margin</Pill> : <Pill tone={marginDelta >= 0 ? "up" : "down"}>{marginDelta >= 0 ? "▲" : "▼"} {Math.abs(marginDelta).toLocaleString("id-ID", { maximumFractionDigits: 1 })} poin</Pill>}
+            pill={<Pill tone="neutral">{hasDateFilter ? "Periode" : "Semua"}</Pill>}
             sub={`Margin ${margin.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`}
           />
           <Kpi
@@ -163,7 +194,7 @@ export default function Beranda() {
             color="#5aa7f0"
             series={seri("piutang")}
             pill={<Pill tone={telat > 0 ? "down" : "neutral"}>{telat > 0 ? `${rpShort(telat).replace("Rp ", "")} telat` : "Tidak telat"}</Pill>}
-            sub={`${p.invoiceBelumLunas} invoice aktif`}
+            sub={`Saldo saat ini · ${p.invoiceBelumLunas} invoice aktif`}
           />
           <Kpi
             label="Hutang"
@@ -171,14 +202,14 @@ export default function Beranda() {
             color="#8d9bb2"
             series={seri("hutang")}
             pill={<Pill tone="neutral">{d.hutangTempo7.count} faktur</Pill>}
-            sub={d.hutangTempo7.count > 0 ? `${rpShort(d.hutangTempo7.nilai)} tempo ≤ 7 hari` : "Tidak ada tempo ≤ 7 hari"}
+            sub={d.hutangTempo7.count > 0 ? `${rpShort(d.hutangTempo7.nilai)} tempo ≤ 7 hari · posisi saat ini` : "Posisi saat ini · tidak ada tempo ≤ 7 hari"}
           />
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)]">
           <Card
             title="Pendapatan, HPP, dan margin"
-            note="6 bulan terakhir, dari jurnal yang sudah dibukukan"
+            note={`Pendapatan dan HPP · ${periodLabel}, dari jurnal yang sudah dibukukan`}
             action={
               <div className="hidden shrink-0 gap-4 text-xs text-[var(--ink-soft)] sm:flex" aria-hidden="true">
                 <span className="flex items-center gap-1.5"><i className="size-2.5 rounded-[3px] bg-[#0e8a83]" />Pendapatan</span>
@@ -196,7 +227,7 @@ export default function Beranda() {
             <RevenueMarginChart data={d.tren} />
           </Card>
 
-          <Card title="Alur pesanan" note={`${stageTotal} dokumen di semua tahap`} className="order-3 xl:order-none">
+          <Card title="Alur pesanan" note={`${stageTotal} dokumen · posisi saat ini (semua data)`} className="order-3 xl:order-none">
             <div className="mb-3 flex h-3.5 gap-[3px] overflow-hidden rounded-full" aria-hidden="true">
               {stages.filter((s) => s.value > 0).map((s) => <i key={s.key} className="block h-full" style={{ flex: s.value, background: s.color }} />)}
               {stageTotal === 0 && <i className="block h-full flex-1 bg-[var(--paper-2)]" />}
@@ -222,7 +253,7 @@ export default function Beranda() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1.1fr]">
-          <Card title="Umur piutang" note={p.piutang > 0 ? `${rpShort(p.piutang)} belum dibayar` : "Tidak ada piutang"}>
+          <Card title="Umur piutang" note={p.piutang > 0 ? `${rpShort(p.piutang)} belum dibayar · posisi saat ini` : "Posisi saat ini · tidak ada piutang"}>
             <div className="flex items-center gap-3">
               <Donut parts={aging} size={120} title={rpShort(u.belumTempo + telat).replace("Rp ", "")} caption="total piutang" />
               <ul className="min-w-0 flex-1 text-[0.8125rem]">
@@ -238,9 +269,9 @@ export default function Beranda() {
             <p className="mt-2 text-xs text-[var(--ink-soft)]">Dalam juta rupiah.</p>
           </Card>
 
-          <Card title="Pelanggan teratas" note="Nilai pesanan bulan ini (jt)">
+          <Card title="Pelanggan teratas" note={`Nilai pesanan dalam periode · juta rupiah`}>
             {d.pelangganTeratas.length === 0 ? (
-              <p className="py-6 text-center text-sm text-[var(--ink-soft)]">Belum ada pesanan bulan ini.</p>
+              <p className="py-6 text-center text-sm text-[var(--ink-soft)]">Belum ada pesanan dalam periode ini.</p>
             ) : (
               <ul>
                 {d.pelangganTeratas.map((c) => (
