@@ -6,6 +6,13 @@ import { trpc } from "@/providers/trpc";
 import { rp, tanggal, waNumber } from "@/lib/format";
 import { PageHeader, Section, StatusBadge, KV, Loading, LoadError } from "@/components/bits";
 
+function parseDiscountPercent(input: string): number | null {
+  const value = input.trim();
+  if (!/^(?:\d{1,3}(?:[.,]\d{1,2})?|[.,]\d{1,2})$/.test(value)) return null;
+  const parsed = Number(value.replace(",", "."));
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
+}
+
 export default function InvoiceDetail() {
   const { id } = useParams();
   const q = trpc.invoices.detail.useQuery({ id: Number(id) }, { refetchOnMount: "always" });
@@ -13,19 +20,35 @@ export default function InvoiceDetail() {
   const issue = trpc.invoices.issue.useMutation({ onSuccess: () => { q.refetch(); utils.invoices.list.invalidate(); } });
   const updateDraft = trpc.invoices.updateDraft.useMutation({ onSuccess: () => { q.refetch(); } });
   const del = trpc.invoices.deleteDraft.useMutation({ onSuccess: () => { window.location.assign("/invoice"); } });
-  const [adjustments, setAdjustments] = useState<Record<number, { discountPercent: number; ppnPercent: number }>>({});
+  const [adjustments, setAdjustments] = useState<Record<number, { discountPercent: string; ppnPercent: number }>>({});
   const [pdfBusy, setPdfBusy] = useState(false);
 
   useEffect(() => {
     const invoiceItems = q.data?.items ?? [];
     // Form state must reset when a different invoice payload arrives.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setAdjustments(Object.fromEntries(invoiceItems.map((it) => [it.id, { discountPercent: it.discountPercent, ppnPercent: it.ppnPercent }])));
+    setAdjustments(Object.fromEntries(invoiceItems.map((it) => [it.id, { discountPercent: String(it.discountPercent), ppnPercent: it.ppnPercent }])));
   }, [q.data?.items]);
 
   if (q.isLoading) return <Loading />;
   if (q.error || !q.data) return <LoadError message={q.error?.message} retry={() => q.refetch()} />;
   const { invoice: inv, items, payments, paid, remaining, soNumber } = q.data;
+  const adjustmentPayload = items.map((item) => {
+    const value = adjustments[item.id] ?? { discountPercent: String(item.discountPercent), ppnPercent: item.ppnPercent };
+    return { id: item.id, discountPercent: parseDiscountPercent(value.discountPercent), ppnPercent: value.ppnPercent };
+  });
+  const adjustmentsValid = adjustmentPayload.every((item) => item.discountPercent !== null);
+  const savePayload = adjustmentPayload.map((item) => ({ ...item, discountPercent: item.discountPercent ?? 0 }));
+
+  const publishInvoice = async () => {
+    if (!adjustmentsValid) return;
+    try {
+      await updateDraft.mutateAsync({ id: inv.id, items: savePayload });
+      await issue.mutateAsync({ id: inv.id });
+    } catch {
+      // Mutation errors are surfaced by the app's shared tRPC error handling.
+    }
+  };
 
   const wa = waNumber(inv.customerPhone);
   const waText = encodeURIComponent(
@@ -69,16 +92,20 @@ export default function InvoiceDetail() {
               </div>
               <div className="space-y-2">
                 {items.map((it) => {
-                  const v = adjustments[it.id] ?? { discountPercent: 0, ppnPercent: 0 };
+                  const v = adjustments[it.id] ?? { discountPercent: String(it.discountPercent), ppnPercent: it.ppnPercent };
+                  const discountValid = parseDiscountPercent(v.discountPercent) !== null;
                   return <div key={it.id} className="grid grid-cols-[minmax(0,1fr)_76px_76px] items-center gap-2 text-sm sm:grid-cols-[minmax(0,1fr)_92px_92px]">
                     <span className="min-w-0 truncate" title={it.description}>{it.description}</span>
-                    <input aria-label={`${it.description}: diskon persen`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} max={100} value={v.discountPercent} title="Diskon %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, discountPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
+                    <input aria-label={`${it.description}: diskon persen`} aria-invalid={!discountValid} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="text" inputMode="decimal" value={v.discountPercent} title="Diskon %, contoh 12,5" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, discountPercent: e.target.value } })} />
                     <input aria-label={`${it.description}: PPN persen`} className="input min-w-0 !min-h-[44px] px-2 text-sm" type="number" min={0} max={100} value={v.ppnPercent} title="PPN %" onChange={(e) => setAdjustments({ ...adjustments, [it.id]: { ...v, ppnPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } })} />
                   </div>;
                 })}
               </div>
+              <p className={`mt-2 text-xs ${adjustmentsValid ? "text-[var(--ink-soft)]" : "text-[var(--bad)]"}`} role={adjustmentsValid ? undefined : "alert"}>
+                {adjustmentsValid ? "Diskon bisa memakai koma atau titik, maksimal dua angka desimal (contoh: 12,5%)." : "Masukkan diskon 0–100 dengan maksimal dua angka desimal, contoh 12,5%."}
+              </p>
               <div className="mt-3 flex justify-end">
-                <button className="btn btn-accent !min-h-[44px] px-3 text-xs" disabled={updateDraft.isPending} onClick={() => updateDraft.mutate({ id: inv.id, items: Object.entries(adjustments).map(([id, v]) => ({ id: Number(id), ...v })) })}>
+                <button className="btn btn-accent !min-h-[44px] px-3 text-xs" disabled={updateDraft.isPending || !adjustmentsValid} onClick={() => updateDraft.mutate({ id: inv.id, items: savePayload })}>
                   <Save size={14} /> {updateDraft.isPending ? "Menyimpan…" : "Simpan PPN & diskon"}
                 </button>
               </div>
@@ -104,8 +131,8 @@ export default function InvoiceDetail() {
       <div className="flex flex-wrap gap-3 px-4 py-6 md:px-8">
         {inv.status === "draft" ? (
           <>
-            <button className="btn flex-1 md:flex-none" onClick={() => issue.mutate({ id: inv.id })} disabled={issue.isPending}>
-              {issue.isPending ? "Menerbitkan…" : "Terbitkan invoice"}
+            <button className="btn flex-1 md:flex-none" onClick={() => void publishInvoice()} disabled={issue.isPending || updateDraft.isPending || !adjustmentsValid}>
+              {issue.isPending || updateDraft.isPending ? "Menyimpan & menerbitkan…" : "Terbitkan invoice"}
             </button>
             <button
               className="btn btn-ghost"

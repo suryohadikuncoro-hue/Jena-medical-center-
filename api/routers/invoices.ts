@@ -168,7 +168,11 @@ export const invoicesRouter = createRouter({
   updateDraft: protectedProcedure
     .input(z.object({
       id: z.number(),
-      items: z.array(z.object({ id: z.number(), discountPercent: z.number().int().min(0).max(100), ppnPercent: z.number().int().min(0).max(100) })).min(1),
+      items: z.array(z.object({
+        id: z.number(),
+        discountPercent: z.number().finite().min(0).max(100).refine((value) => Math.abs(value * 100 - Math.round(value * 100)) < 1e-7, "Diskon maksimal dua angka desimal"),
+        ppnPercent: z.number().int().min(0).max(100),
+      })).min(1),
     }))
     .mutation(async ({ input }) => {
       const db = getDb();

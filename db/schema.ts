@@ -155,7 +155,7 @@ export const invoiceItems = pgTable("invoice_items", {
   description: varchar("description", { length: 200 }).notNull(),
   qty: integer("qty").notNull(),
   unitPrice: integer("unit_price").notNull(),
-  discountPercent: integer("discount_percent").notNull().default(0),
+  discountPercent: numeric("discount_percent", { mode: "number" }).notNull().default(0),
   ppnPercent: integer("ppn_percent").notNull().default(0),
   taxable: boolean("taxable").notNull().default(true),
   cogsAmount: integer("cogs_amount").notNull().default(0),
