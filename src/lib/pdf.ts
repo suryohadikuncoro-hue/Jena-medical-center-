@@ -13,6 +13,10 @@ function money(value: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 }
 
+function percent(value: number) {
+  return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(value)}%`;
+}
+
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number) {
   const words = text.split(/\s+/);
   const lines: string[] = [];
@@ -100,9 +104,9 @@ export async function shareInvoicePdf(inv: { number: string; issueDate: string; 
   infoBox(page, "Kepada Yth.", `${inv.customerName}${inv.customerAddress ? `\n${inv.customerAddress}` : ""}`, 42, 690, 310, bold, regular);
   infoBox(page, "Jatuh tempo", inv.dueDate || "-", 365, 690, 188, bold, regular);
   let y = 655;
-  const cols = [{ label: "DESKRIPSI", x: 54, width: 225 }, { label: "QTY", x: 300, width: 42, align: "right" as const }, { label: "HARGA", x: 350, width: 90, align: "right" as const }, { label: "JUMLAH", x: 450, width: 91, align: "right" as const }];
+  const cols = [{ label: "DESKRIPSI", x: 54, width: 175 }, { label: "QTY", x: 238, width: 36, align: "right" as const }, { label: "HARGA", x: 280, width: 75, align: "right" as const }, { label: "DISKON", x: 360, width: 65, align: "right" as const }, { label: "JUMLAH", x: 435, width: 106, align: "right" as const }];
   tableHeader(page, cols, y, bold); y -= 25;
-  items.forEach((item, index) => { const net = item.qty * item.unitPrice - Math.round(item.qty * item.unitPrice * item.discountPercent / 100); detailRow(page, [{ value: item.description, x: 54, width: 225 }, { value: String(item.qty), x: 300, width: 42, align: "right" }, { value: money(item.unitPrice), x: 350, width: 90, align: "right" }, { value: money(net), x: 450, width: 91, align: "right" }], y, regular, index % 2 === 1); y -= 24; });
+  items.forEach((item, index) => { const net = item.qty * item.unitPrice - Math.round(item.qty * item.unitPrice * item.discountPercent / 100); detailRow(page, [{ value: item.description, x: 54, width: 175 }, { value: String(item.qty), x: 238, width: 36, align: "right" }, { value: money(item.unitPrice), x: 280, width: 75, align: "right" }, { value: percent(item.discountPercent), x: 360, width: 65, align: "right" }, { value: money(net), x: 435, width: 106, align: "right" }], y, regular, index % 2 === 1); y -= 24; });
   y -= 18;
   const totalX = 390;
   line(page, y + 11, totalX, 553, 0.8, COLORS.accent);
